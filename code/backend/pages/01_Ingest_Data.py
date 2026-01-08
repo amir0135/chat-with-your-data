@@ -14,16 +14,20 @@ sys.path.append(path.join(path.dirname(__file__), ".."))
 env_helper: EnvHelper = EnvHelper()
 logger = logging.getLogger(__name__)
 
+# Get parent directory (backend folder)
+backend_dir = path.dirname(path.dirname(path.abspath(__file__)))
+
 st.set_page_config(
     page_title="Ingest Data",
-    page_icon=path.join("images", "favicon.ico"),
+    page_icon=path.join(backend_dir, "images", "favicon.ico"),
     layout="wide",
     menu_items=None,
 )
 
 
 def load_css(file_path):
-    with open(file_path) as f:
+    full_path = path.join(backend_dir, file_path)
+    with open(full_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 

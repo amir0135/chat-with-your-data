@@ -15,16 +15,20 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 env_helper: EnvHelper = EnvHelper()
 logger = logging.getLogger(__name__)
 
+# Get parent directory (backend folder)
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 st.set_page_config(
     page_title="Configure Prompts",
-    page_icon=os.path.join("images", "favicon.ico"),
+    page_icon=os.path.join(backend_dir, "images", "favicon.ico"),
     layout="wide",
     menu_items=None,
 )
 
 
 def load_css(file_path):
-    with open(file_path) as f:
+    full_path = os.path.join(backend_dir, file_path)
+    with open(full_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
