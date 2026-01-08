@@ -14,7 +14,7 @@ class ChatPlugin:
         self.chat_history = chat_history
 
     @kernel_function(
-        description="Provide answers to any fact question coming from users."
+        description="Search uploaded documents and knowledge base to answer questions. Use this as the PRIMARY tool for any general information, facility details, procedures, documentation, or when the user asks about stored information. This searches PDFs, Word docs, and other uploaded files."
     )
     def search_documents(
         self,
@@ -45,7 +45,7 @@ class ChatPlugin:
         )
 
     @kernel_function(
-        description="Query Trackman operational data including facility errors, connectivity status, disconnect reasons, data quality metrics, and facility summaries. Use this when the user asks about TrackMan operations, error reports, connectivity issues, or data quality."
+        description="Query live operational database for REAL-TIME Trackman metrics. ONLY use this for: 1) Recent errors/failures in the last N days, 2) Current connectivity status, 3) Live data quality scores, 4) Active system alerts. DO NOT use for general facility information, procedures, or documentation - use search_documents instead."
     )
     def query_trackman_data(
         self,
