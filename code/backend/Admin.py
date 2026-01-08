@@ -38,17 +38,22 @@ if os.getenv("APPLICATIONINSIGHTS_ENABLED", "false").lower() == "true":
 logger = logging.getLogger(__name__)
 logger.debug("Starting admin app")
 
+# Get the base directory for this file
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
 st.set_page_config(
     page_title="Admin",
-    page_icon=os.path.join("images", "favicon.ico"),
+    page_icon=os.path.join(base_dir, "images", "favicon.ico"),
     layout="wide",
     menu_items=None,
 )
 
 
 def load_css(file_path):
-    with open(file_path) as f:
+    # Use absolute path based on this file's location
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    full_path = os.path.join(base_dir, file_path)
+    with open(full_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
@@ -58,7 +63,8 @@ load_css("pages/common.css")
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col1:
-    st.image(os.path.join("images", "logo.png"))
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    st.image(os.path.join(base_dir, "images", "logo.png"))
 
 st.write("# Chat with your data Solution Accelerator")
 
