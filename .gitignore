@@ -431,3 +431,6 @@ tests/integration/ui/cypress/screenshots/
 .idea/
 Pipfile
 Pipfile.lock
+
+data/testtrack/*.csv
+data/testtrack/*.xlsx
