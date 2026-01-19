@@ -131,3 +131,25 @@ class TrackmanDataSource(ABC):
             }
         """
         pass
+
+    @abstractmethod
+    def execute_custom_query(self, sql_query: str) -> Dict:
+        """
+        Execute a validated custom SQL query.
+
+        This method is used by the AI-powered query tool to run
+        dynamically generated SQL queries. The query should already
+        be validated before calling this method.
+
+        Args:
+            sql_query: A validated SQL SELECT query
+
+        Returns:
+            Dict with structure:
+            {
+                "columns": [column names],
+                "rows": [[values], ...],
+                "metadata": {"source": "...", "rowCount": X}
+            }
+        """
+        pass

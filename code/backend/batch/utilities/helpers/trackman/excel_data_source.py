@@ -206,16 +206,9 @@ class ExcelDataSource(TrackmanDataSource):
 
             # Count error messages and get most severe severity for each
             error_summary = (
-                df.groupby(["error_message", "error_code"])
-                .agg({"error_code": "size", "severity": "first"})
-                .reset_index()
+                df.groupby(["error_message", "error_code"], as_index=False)
+                .agg(count=("error_message", "size"), severity=("severity", "first"))
             )
-            error_summary.columns = [
-                "error_message",
-                "error_code",
-                "count",
-                "severity",
-            ]
 
             # Sort by count and limit
             error_summary = error_summary.sort_values("count", ascending=False).head(
@@ -421,3 +414,22 @@ class ExcelDataSource(TrackmanDataSource):
         except Exception as e:
             logger.error(f"Error in get_data_quality_summary: {str(e)}")
             raise
+
+    def execute_custom_query(self, sql_query: str) -> Dict:
+        """
+        Execute a custom SQL query - NOT SUPPORTED for Excel data source.
+
+        The Excel data source does not support arbitrary SQL queries.
+        Use the standard query methods instead, or switch to Redshift/PostgreSQL.
+
+        Args:
+            sql_query: SQL query (ignored)
+
+        Raises:
+            NotImplementedError: Always raised for Excel data source
+        """
+        raise NotImplementedError(
+            "Custom SQL queries are not supported for Excel data source. "
+            "Use the standard query methods (get_errors_summary, etc.) or "
+            "configure a Redshift/PostgreSQL connection."
+        )

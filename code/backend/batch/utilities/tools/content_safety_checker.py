@@ -54,7 +54,14 @@ class ContentSafetyChecker(AnswerProcessingBase):
 
     def _filter_text_and_replace(self, text, response_template):
         logger.info("Analyzing text for harmful content")
-        request = AnalyzeTextOptions(text=text)
+        # Azure Content Safety has a 10,000 character limit
+        # For large responses (e.g., from data queries), we analyze a sample
+        MAX_TEXT_LENGTH = 9500
+        text_to_analyze = text[:MAX_TEXT_LENGTH] if len(text) > MAX_TEXT_LENGTH else text
+        if len(text) > MAX_TEXT_LENGTH:
+            logger.info(f"Text truncated from {len(text)} to {MAX_TEXT_LENGTH} chars for content safety analysis")
+
+        request = AnalyzeTextOptions(text=text_to_analyze)
         try:
             response = self.content_safety_client.analyze_text(request)
         except HttpResponseError as e:

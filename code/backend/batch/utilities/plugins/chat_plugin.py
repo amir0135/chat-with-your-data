@@ -5,17 +5,30 @@ from semantic_kernel.functions import kernel_function
 from ..common.answer import Answer
 from ..tools.question_answer_tool import QuestionAnswerTool
 from ..tools.text_processing_tool import TextProcessingTool
-from ..tools.trackman_query_tool import TrackmanQueryTool
+from ..tools.trackman_nl_query_tool import TrackmanNLQueryTool
+from ..tools.trackman_analysis_tool import TrackmanAnalysisTool
+from ..helpers.azure_ai_integration import trace_operation
 
 
 class ChatPlugin:
+    """
+    Simplified ChatPlugin with 4 tools:
+    1. search_documents - RAG for uploaded docs
+    2. text_processing - Text transformations
+    3. query_trackman - All database queries (LLM-generated SQL)
+    4. analyze_trackman - Multi-step analysis
+
+    Enhanced with Azure AI Tracing for observability.
+    """
+
     def __init__(self, question: str, chat_history: list[dict]) -> None:
         self.question = question
         self.chat_history = chat_history
 
     @kernel_function(
-        description="Search uploaded documents and knowledge base to answer questions. Use this as the PRIMARY tool for any general information, facility details, procedures, documentation, or when the user asks about stored information. This searches PDFs, Word docs, and other uploaded files."
+        description="Search uploaded documents and knowledge base. Use ONLY for: documentation, procedures, policies, how-to guides, or file contents. Do NOT use for data queries about errors, sessions, facilities, or performance metrics."
     )
+    @trace_operation("search_documents", {"plugin": "chat"})
     def search_documents(
         self,
         question: Annotated[
@@ -27,14 +40,15 @@ class ChatPlugin:
         )
 
     @kernel_function(
-        description="Useful when you want to apply a transformation on the text, like translate, summarize, rephrase and so on."
+        description="Apply text transformations like translate, summarize, rephrase."
     )
+    @trace_operation("text_processing", {"plugin": "chat"})
     def text_processing(
         self,
         text: Annotated[str, "The text to be processed"],
         operation: Annotated[
             str,
-            "The operation to be performed on the text. Like Translate to Italian, Summarize, Paraphrase, etc. If a language is specified, return that as part of the operation. Preserve the operation name in the user language.",
+            "The operation to perform: Translate to Italian, Summarize, Paraphrase, etc.",
         ],
     ) -> Answer:
         return TextProcessingTool().answer_question(
@@ -45,23 +59,80 @@ class ChatPlugin:
         )
 
     @kernel_function(
-        description="Query live operational database for REAL-TIME Trackman metrics. ONLY use this for: 1) Recent errors/failures in the last N days, 2) Current connectivity status, 3) Live data quality scores, 4) Active system alerts. DO NOT use for general facility information, procedures, or documentation - use search_documents instead."
+        description="Query Trackman/operational database for data counts and metrics. Use for: error counts, error types, session counts, disconnection counts, connectivity metrics, facility performance, bay performance, unit statistics, or any question asking 'how many', 'which has most/least', 'top N', 'count of', 'list of errors/sessions/facilities'."
     )
-    def query_trackman_data(
+    @trace_operation("query_trackman", {"plugin": "chat", "data_source": "trackman"})
+    def query_trackman(
         self,
-        intent: Annotated[
+        question: Annotated[
             str,
-            "Type of query: errors_summary, top_error_messages, connectivity_summary, disconnect_reasons, facility_summary, or data_quality_summary",
+            "The question exactly as asked, e.g., 'Which facilities have the most errors?'",
         ],
-        range_days: Annotated[int, "Number of days to look back (default: 30)"] = 30,
-        facility_id: Annotated[
-            str, "Optional facility ID to filter results (e.g., 'FAC001')"
-        ] = "",
-        limit: Annotated[int, "Maximum results for top queries (default: 10)"] = 10,
+        max_rows: Annotated[
+            int, "Maximum rows to return (default: 50, max: 100)"
+        ] = 50,
     ) -> Answer:
-        return TrackmanQueryTool().query_trackman(
-            intent=intent,
-            range_days=range_days,
-            facility_id=facility_id,
-            limit=limit,
+        return TrackmanNLQueryTool().query_with_natural_language(
+            question=question,
+            max_rows=min(max_rows, 100),
         )
+
+    @kernel_function(
+        description="Deep analysis of Trackman data. Use for: facility health assessment, comparing multiple facilities, trend analysis over time, or correlating errors with connectivity issues."
+    )
+    @trace_operation("analyze_trackman", {"plugin": "chat", "data_source": "trackman"})
+    def analyze_trackman(
+        self,
+        analysis_type: Annotated[
+            str,
+            "'facility_health', 'compare_facilities', 'trend', or 'correlation'",
+        ],
+        facility_id: Annotated[
+            str,
+            "Facility name or ID for analysis",
+        ] = "",
+        facility_ids: Annotated[
+            str,
+            "Comma-separated facility names/IDs for comparison",
+        ] = "",
+        metric: Annotated[
+            str,
+            "'errors', 'connectivity', or 'data_quality'",
+        ] = "errors",
+        range_days: Annotated[
+            int, "Days to analyze (default: 30)"
+        ] = 30,
+    ) -> Answer:
+        tool = TrackmanAnalysisTool()
+
+        if analysis_type == "facility_health":
+            if not facility_id:
+                return Answer(
+                    question="Facility health analysis",
+                    answer="Error: facility_id is required for facility_health analysis",
+                    source_documents=[],
+                )
+            return tool.analyze_facility_health(facility_id, range_days)
+
+        elif analysis_type == "compare_facilities":
+            if not facility_ids:
+                return Answer(
+                    question="Facility comparison",
+                    answer="Error: facility_ids (comma-separated) is required for comparison",
+                    source_documents=[],
+                )
+            fac_list = [f.strip() for f in facility_ids.split(",") if f.strip()]
+            return tool.compare_facilities(fac_list, range_days)
+
+        elif analysis_type == "trend":
+            return tool.analyze_trend(metric, range_days, facility_id)
+
+        elif analysis_type == "correlation":
+            return tool.correlate_errors_connectivity(range_days, facility_id)
+
+        else:
+            return Answer(
+                question=f"Analysis: {analysis_type}",
+                answer=f"Unknown analysis type: {analysis_type}. Use 'facility_health', 'compare_facilities', 'trend', or 'correlation'.",
+                source_documents=[],
+            )

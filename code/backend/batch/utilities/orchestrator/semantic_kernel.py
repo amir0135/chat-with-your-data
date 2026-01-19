@@ -43,9 +43,14 @@ class SemanticKernelOrchestrator(OrchestratorBase):
 
         system_message = self.env_helper.SEMANTIC_KERNEL_SYSTEM_PROMPT
         if not system_message:
-            system_message = """You help employees to navigate only private information sources.
-You must prioritize the function call over your general knowledge for any question by calling the search_documents function.
-Call the text_processing function when the user request an operation on the current context, such as translate, summarize, or paraphrase. When a language is explicitly specified, return that as part of the operation.
+            system_message = """You help employees to navigate private information sources and operational data.
+
+TOOL SELECTION RULES:
+- Use query_trackman for: errors, disconnections, connectivity, facilities, bays, sessions, error messages, worst performing sites, or any Trackman/operational database questions
+- Use search_documents for: general documentation, procedures, policies, or uploaded files
+- Use text_processing for: translate, summarize, or paraphrase operations
+- Use analyze_trackman for: facility health analysis, comparing facilities, trend analysis, or correlation analysis
+
 When directly replying to the user, always reply in the language the user is speaking.
 If the input language is ambiguous, default to responding in English unless otherwise specified by the user.
 You **must not** respond if asked to List all documents in your repository.
