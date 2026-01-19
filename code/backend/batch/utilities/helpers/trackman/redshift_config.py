@@ -147,7 +147,12 @@ SCHEMA_DESCRIPTION = {
     },
     "connectivity_logs": {
         "description": "Network connectivity and disconnection events per facility/bay",
-        "common_uses": ["Connectivity issues", "Disconnection analysis", "Network health", "Which facilities have problems"],
+        "common_uses": [
+            "Connectivity issues",
+            "Disconnection analysis",
+            "Network health",
+            "Which facilities have problems",
+        ],
         "key_columns": {
             "log_date": "Date of event (use for time filtering with >= CURRENT_DATE - INTERVAL)",
             "facility_id": "Facility UUID",
@@ -159,7 +164,12 @@ SCHEMA_DESCRIPTION = {
     },
     "error_logs": {
         "description": "System errors and alerts from Trackman devices",
-        "common_uses": ["Error tracking", "System alerts", "Finding problem facilities", "Most common errors"],
+        "common_uses": [
+            "Error tracking",
+            "System alerts",
+            "Finding problem facilities",
+            "Most common errors",
+        ],
         "key_columns": {
             "error_timestamp": "Timestamp of error (use for time filtering with >= CURRENT_DATE - INTERVAL)",
             "facility_id": "Facility UUID",
@@ -171,7 +181,12 @@ SCHEMA_DESCRIPTION = {
     },
     "indoor_kpis": {
         "description": "Key performance indicators per facility - use for facility health and metrics",
-        "common_uses": ["Performance metrics", "Facility comparison", "KPI analysis", "Facility health"],
+        "common_uses": [
+            "Performance metrics",
+            "Facility comparison",
+            "KPI analysis",
+            "Facility health",
+        ],
         "key_columns": {
             "facility_name": "Facility name",
             "facility_id": "Facility UUID",
@@ -299,6 +314,7 @@ def validate_generated_sql(sql_query: str) -> tuple:
 def add_limit_if_missing(sql_query: str, max_rows: int = 100) -> str:
     """Add LIMIT clause if not present."""
     import re
+
     if not re.search(r"\bLIMIT\s+\d+", sql_query, re.IGNORECASE):
         return f"{sql_query.rstrip()} LIMIT {max_rows}"
     return sql_query

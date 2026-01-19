@@ -50,7 +50,7 @@ def query_api(question: str) -> Dict[str, Any]:
     """Send a question to the API and return the response."""
     payload = {
         "conversation_id": f"test-{datetime.now().timestamp()}",
-        "messages": [{"role": "user", "content": question}]
+        "messages": [{"role": "user", "content": question}],
     }
 
     try:
@@ -93,7 +93,7 @@ def verify_contains(answer: str, expected_items: list) -> Tuple[bool, str]:
 def verify_number_in_range(answer: str, min_val: int, max_val: int) -> Tuple[bool, str]:
     """Verify a number in the answer is within expected range."""
     # Find all numbers in the answer
-    numbers = re.findall(r'\b(\d{1,3}(?:,\d{3})*|\d+)\b', answer)
+    numbers = re.findall(r"\b(\d{1,3}(?:,\d{3})*|\d+)\b", answer)
 
     for num_str in numbers:
         try:
@@ -165,60 +165,72 @@ def get_expected_values_from_db() -> Dict[str, Any]:
     try:
         with conn.cursor() as cur:
             # Total errors in last 7 days
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT COUNT(*) FROM error_logs
                 WHERE error_timestamp >= CURRENT_DATE - INTERVAL '7 days'
-            """)
+            """
+            )
             values["errors_7d"] = cur.fetchone()[0]
 
             # Total disconnections in last 7 days
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT COALESCE(SUM(disconnection_cnt), 0) FROM connectivity_logs
                 WHERE log_date >= CURRENT_DATE - INTERVAL '7 days'
-            """)
+            """
+            )
             values["disconnections_7d"] = cur.fetchone()[0]
 
             # Unique facilities with errors
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT COUNT(DISTINCT facility_id) FROM error_logs
                 WHERE error_timestamp >= CURRENT_DATE - INTERVAL '7 days'
-            """)
+            """
+            )
             values["unique_facilities_errors"] = cur.fetchone()[0]
 
             # Top facility by errors (name)
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT facility_name, COUNT(*) as cnt
                 FROM error_logs
                 WHERE error_timestamp >= CURRENT_DATE - INTERVAL '7 days'
                 GROUP BY facility_name
                 ORDER BY cnt DESC
                 LIMIT 1
-            """)
+            """
+            )
             row = cur.fetchone()
             values["top_error_facility_name"] = row[0] if row else None
             values["top_error_facility_count"] = row[1] if row else 0
 
             # Top facility by disconnections
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT facility_name, SUM(disconnection_cnt) as total
                 FROM connectivity_logs
                 WHERE log_date >= CURRENT_DATE - INTERVAL '7 days'
                 GROUP BY facility_name
                 ORDER BY total DESC
                 LIMIT 1
-            """)
+            """
+            )
             row = cur.fetchone()
             values["top_disconnect_facility_name"] = row[0] if row else None
             values["top_disconnect_facility_count"] = row[1] if row else 0
 
             # Sample facility names for testing
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT DISTINCT facility_name
                 FROM error_logs
                 WHERE facility_name IS NOT NULL AND facility_name != ''
                 ORDER BY facility_name
                 LIMIT 5
-            """)
+            """
+            )
             values["sample_facilities"] = [row[0] for row in cur.fetchall()]
 
     finally:
@@ -260,8 +272,12 @@ def run_all_tests():
     expected = get_expected_values_from_db()
     print(f"  - Errors in last 7 days: {expected['errors_7d']:,}")
     print(f"  - Disconnections in last 7 days: {expected['disconnections_7d']:,}")
-    print(f"  - Top error facility: {expected['top_error_facility_name']} ({expected['top_error_facility_count']:,} errors)")
-    print(f"  - Top disconnect facility: {expected['top_disconnect_facility_name']} ({expected['top_disconnect_facility_count']:,} disconnections)")
+    print(
+        f"  - Top error facility: {expected['top_error_facility_name']} ({expected['top_error_facility_count']:,} errors)"
+    )
+    print(
+        f"  - Top disconnect facility: {expected['top_disconnect_facility_name']} ({expected['top_disconnect_facility_count']:,} disconnections)"
+    )
 
     # Define test cases
     test_cases = [
@@ -270,97 +286,122 @@ def run_all_tests():
             "Error Summary - Last 7 Days",
             "Show me errors from the last 7 days",
             [
-                ("Response contains 'error'",
-                 lambda a: verify_contains(a, ["error"])),
-                ("Response contains table data",
-                 lambda a: verify_contains(a, ["|"])),
-                ("Response contains facility info",
-                 lambda a: verify_contains(a, ["facility"])),
-            ]
+                ("Response contains 'error'", lambda a: verify_contains(a, ["error"])),
+                ("Response contains table data", lambda a: verify_contains(a, ["|"])),
+                (
+                    "Response contains facility info",
+                    lambda a: verify_contains(a, ["facility"]),
+                ),
+            ],
         ),
-
         # Test 2: Disconnections
         (
             "Disconnections Summary",
             "Which facilities have the most disconnections in the last 7 days?",
             [
-                ("Response contains 'disconnection'",
-                 lambda a: verify_contains(a, ["disconnect"])),
-                ("Response contains table data",
-                 lambda a: verify_contains(a, ["|"])),
-                ("Top facility mentioned",
-                 lambda a: verify_contains(a, [expected['top_disconnect_facility_name']]) if expected['top_disconnect_facility_name'] else (True, "Skipped")),
-            ]
+                (
+                    "Response contains 'disconnection'",
+                    lambda a: verify_contains(a, ["disconnect"]),
+                ),
+                ("Response contains table data", lambda a: verify_contains(a, ["|"])),
+                (
+                    "Top facility mentioned",
+                    lambda a: (
+                        verify_contains(a, [expected["top_disconnect_facility_name"]])
+                        if expected["top_disconnect_facility_name"]
+                        else (True, "Skipped")
+                    ),
+                ),
+            ],
         ),
-
         # Test 3: Specific facility query
         (
             "Specific Facility Query",
             f"Show me errors for {expected['sample_facilities'][0] if expected['sample_facilities'] else 'Facility 1'}",
             [
-                ("Response is not empty",
-                 lambda a: (len(a) > 50, f"Answer length: {len(a)}")),
-                ("Response contains error info or no data message",
-                 lambda a: verify_contains(a, ["error"]) if "no data" not in a.lower() else (True, "No data message")),
-            ]
+                (
+                    "Response is not empty",
+                    lambda a: (len(a) > 50, f"Answer length: {len(a)}"),
+                ),
+                (
+                    "Response contains error info or no data message",
+                    lambda a: (
+                        verify_contains(a, ["error"])
+                        if "no data" not in a.lower()
+                        else (True, "No data message")
+                    ),
+                ),
+            ],
         ),
-
         # Test 4: Top errors
         (
             "Top Error Messages",
             "What are the most common error messages in the last 7 days?",
             [
-                ("Response contains error info",
-                 lambda a: verify_contains(a, ["error"])),
-                ("Response has structured data",
-                 lambda a: (len(a) > 100, f"Answer length: {len(a)}")),
-            ]
+                (
+                    "Response contains error info",
+                    lambda a: verify_contains(a, ["error"]),
+                ),
+                (
+                    "Response has structured data",
+                    lambda a: (len(a) > 100, f"Answer length: {len(a)}"),
+                ),
+            ],
         ),
-
         # Test 5: Connectivity analysis
         (
             "Connectivity Analysis",
             "Analyze connectivity issues across all facilities",
             [
-                ("Response mentions connectivity",
-                 lambda a: verify_contains(a, ["connect"])),
-                ("Response contains analysis or data",
-                 lambda a: (len(a) > 100, f"Answer length: {len(a)}")),
-            ]
+                (
+                    "Response mentions connectivity",
+                    lambda a: verify_contains(a, ["connect"]),
+                ),
+                (
+                    "Response contains analysis or data",
+                    lambda a: (len(a) > 100, f"Answer length: {len(a)}"),
+                ),
+            ],
         ),
-
         # Test 6: Time range variation
         (
             "30-Day Error Summary",
             "Show error summary for the last 30 days",
             [
-                ("Response contains error info",
-                 lambda a: verify_contains(a, ["error"])),
-                ("Response contains data",
-                 lambda a: verify_contains(a, ["|"]) or (len(a) > 100, "Has content")),
-            ]
+                (
+                    "Response contains error info",
+                    lambda a: verify_contains(a, ["error"]),
+                ),
+                (
+                    "Response contains data",
+                    lambda a: verify_contains(a, ["|"])
+                    or (len(a) > 100, "Has content"),
+                ),
+            ],
         ),
-
         # Test 7: Natural language query
         (
             "Natural Language Query",
             "Which locations are having the most problems?",
             [
-                ("Response provides location/facility info",
-                 lambda a: verify_contains(a, ["facility"]) or verify_contains(a, ["location"])),
-            ]
+                (
+                    "Response provides location/facility info",
+                    lambda a: verify_contains(a, ["facility"])
+                    or verify_contains(a, ["location"]),
+                ),
+            ],
         ),
-
         # Test 8: Count verification
         (
             "Data Count Verification",
             "How many total errors occurred in the last 7 days?",
             [
-                ("Response mentions errors",
-                 lambda a: verify_contains(a, ["error"])),
-                ("Response has numbers",
-                 lambda a: (bool(re.search(r'\d+', a)), "Contains numbers")),
-            ]
+                ("Response mentions errors", lambda a: verify_contains(a, ["error"])),
+                (
+                    "Response has numbers",
+                    lambda a: (bool(re.search(r"\d+", a)), "Contains numbers"),
+                ),
+            ],
         ),
     ]
 

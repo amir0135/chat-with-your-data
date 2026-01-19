@@ -46,7 +46,7 @@ def query_api(question: str) -> dict:
     """Send a question to the API."""
     payload = {
         "conversation_id": f"test-{time.time()}",
-        "messages": [{"role": "user", "content": question}]
+        "messages": [{"role": "user", "content": question}],
     }
     try:
         response = requests.post(API_URL, json=payload, timeout=120)
@@ -118,9 +118,9 @@ def run_tests():
             else:
                 print(f"    ✅ Response ({elapsed:.1f}s, {len(answer)} chars):")
                 # Indent the answer
-                for line in display.split('\n')[:15]:
+                for line in display.split("\n")[:15]:
                     print(f"       {line}")
-                if len(answer) > 500 or len(display.split('\n')) > 15:
+                if len(answer) > 500 or len(display.split("\n")) > 15:
                     print("       [... truncated ...]")
                 results.append((question, True, elapsed))
 

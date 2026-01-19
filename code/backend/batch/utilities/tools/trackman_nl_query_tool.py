@@ -57,7 +57,8 @@ class SQLCache:
         # Replace specific numbers with placeholders for pattern matching
         # "last 7 days" and "last 10 days" become same pattern
         import re
-        normalized = re.sub(r'\b\d+\b', 'N', normalized)
+
+        normalized = re.sub(r"\b\d+\b", "N", normalized)
         return normalized
 
     def _get_key(self, question: str) -> str:
@@ -82,8 +83,7 @@ class SQLCache:
         """Cache SQL for a question pattern."""
         # Evict oldest entries if cache is full
         if len(self._cache) >= self._max_size:
-            oldest_key = min(self._cache.keys(),
-                           key=lambda k: self._cache[k][1])
+            oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k][1])
             del self._cache[oldest_key]
 
         key = self._get_key(question)
@@ -186,7 +186,7 @@ class TrackmanNLQueryTool:
             schema_context = get_schema_for_prompt()  # Default static schema
             try:
                 data_source = get_data_source()
-                if hasattr(data_source, 'get_dynamic_schema_for_prompt'):
+                if hasattr(data_source, "get_dynamic_schema_for_prompt"):
                     dynamic_schema = data_source.get_dynamic_schema_for_prompt()
                     if dynamic_schema:
                         schema_context = dynamic_schema
@@ -211,7 +211,9 @@ class TrackmanNLQueryTool:
             if generated_sql.startswith("```"):
                 lines = generated_sql.split("\n")
                 # Remove first line (```sql) and last line (```)
-                generated_sql = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                generated_sql = "\n".join(
+                    lines[1:-1] if lines[-1].strip() == "```" else lines[1:]
+                )
 
             generated_sql = generated_sql.strip().rstrip(";")
 
@@ -268,7 +270,7 @@ class TrackmanNLQueryTool:
                 return Answer(
                     question=question,
                     answer="I'm sorry, but I can't process this request. "
-                           "Please rephrase your question about Trackman data.",
+                    "Please rephrase your question about Trackman data.",
                     source_documents=[],
                     prompt_tokens=0,
                     completion_tokens=0,
@@ -295,7 +297,7 @@ class TrackmanNLQueryTool:
                 return Answer(
                     question=question,
                     answer=f"Generated query failed validation: {error_message}\n\n"
-                           f"Please try rephrasing your question or use a standard query type.",
+                    f"Please try rephrasing your question or use a standard query type.",
                     source_documents=[],
                     prompt_tokens=sql_result.get("prompt_tokens", 0),
                     completion_tokens=sql_result.get("completion_tokens", 0),

@@ -35,7 +35,10 @@ class RedshiftDataSource(TrackmanDataSource):
 
         logger.info(
             "Initialized Redshift data source: %s@%s:%s/%s",
-            self.user, self.host, self.port, self.database
+            self.user,
+            self.host,
+            self.port,
+            self.database,
         )
 
         # Initialize schema introspection on startup
@@ -71,7 +74,8 @@ class RedshiftDataSource(TrackmanDataSource):
             conn = self._get_connection()
             with conn.cursor() as cur:
                 # Query column information
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT
                         table_name,
                         column_name,
@@ -82,12 +86,20 @@ class RedshiftDataSource(TrackmanDataSource):
                     WHERE table_schema = %s
                       AND table_name = ANY(%s)
                     ORDER BY table_name, ordinal_position
-                """, (self.schema, allowed_tables))
+                """,
+                    (self.schema, allowed_tables),
+                )
 
                 rows = cur.fetchall()
 
                 schema_info: Dict[str, Dict] = {}
-                for table_name, column_name, data_type, is_nullable, column_default in rows:
+                for (
+                    table_name,
+                    column_name,
+                    data_type,
+                    is_nullable,
+                    column_default,
+                ) in rows:
                     if table_name not in schema_info:
                         schema_info[table_name] = {
                             "columns": {},
@@ -110,7 +122,9 @@ class RedshiftDataSource(TrackmanDataSource):
                 conn.close()
 
     @trace_operation("sample_data_retrieval")
-    def _get_sample_data(self, tables: List[str], sample_size: int = 3) -> Dict[str, Dict[str, Any]]:
+    def _get_sample_data(
+        self, tables: List[str], sample_size: int = 3
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Fetch sample rows from each table to help LLM understand data patterns.
 
@@ -141,7 +155,11 @@ class RedshiftDataSource(TrackmanDataSource):
                         )
                         cur.execute(query, (sample_size,))
 
-                        columns = [desc[0] for desc in cur.description] if cur.description else []
+                        columns = (
+                            [desc[0] for desc in cur.description]
+                            if cur.description
+                            else []
+                        )
                         rows = cur.fetchall()
 
                         sample_data[table_name] = {
@@ -180,6 +198,7 @@ class RedshiftDataSource(TrackmanDataSource):
         if not schema_info:
             # Fall back to static schema
             from .redshift_config import get_schema_for_prompt
+
             return get_schema_for_prompt()
 
         lines = ["## Available Tables and Columns\n"]
@@ -202,8 +221,12 @@ class RedshiftDataSource(TrackmanDataSource):
                 if samples.get("rows"):
                     lines.append("\n**Sample data:**")
                     sample_cols = samples.get("columns", [])
-                    lines.append("| " + " | ".join(sample_cols[:6]) + " |")  # Limit columns
-                    lines.append("| " + " | ".join(["---"] * min(6, len(sample_cols))) + " |")
+                    lines.append(
+                        "| " + " | ".join(sample_cols[:6]) + " |"
+                    )  # Limit columns
+                    lines.append(
+                        "| " + " | ".join(["---"] * min(6, len(sample_cols))) + " |"
+                    )
 
                     for row in samples.get("rows", [])[:2]:  # Show 2 rows max
                         # Truncate long values and limit columns
@@ -258,7 +281,9 @@ class RedshiftDataSource(TrackmanDataSource):
                 else:
                     cur.execute(query)
                 rows = cur.fetchall()
-                columns = [desc[0] for desc in cur.description] if cur.description else []
+                columns = (
+                    [desc[0] for desc in cur.description] if cur.description else []
+                )
                 return {"columns": columns, "rows": rows}
         except psycopg2.Error as e:
             logger.error("Error executing query: %s", e)
@@ -300,7 +325,7 @@ class RedshiftDataSource(TrackmanDataSource):
             return None, None
 
         # Check if it looks like a UUID
-        is_uuid = len(facility) == 36 and facility.count('-') == 4
+        is_uuid = len(facility) == 36 and facility.count("-") == 4
 
         conn = None
         try:
@@ -310,13 +335,13 @@ class RedshiftDataSource(TrackmanDataSource):
                     # Search by facility_id
                     cur.execute(
                         "SELECT facility_id, facility_name FROM error_logs WHERE facility_id = %s LIMIT 1",
-                        (facility,)
+                        (facility,),
                     )
                 else:
                     # Search by facility_name (case-insensitive)
                     cur.execute(
                         "SELECT facility_id, facility_name FROM error_logs WHERE LOWER(facility_name) = LOWER(%s) LIMIT 1",
-                        (facility,)
+                        (facility,),
                     )
                 row = cur.fetchone()
                 if row:
@@ -388,7 +413,13 @@ class RedshiftDataSource(TrackmanDataSource):
             result = self._execute_query(query, params)
             truncated = len(result["rows"]) >= max_rows
             return self._format_result(
-                result, {"range_days": range_days, "facility_id": facility_id, "max_rows": max_rows, "truncated": truncated}
+                result,
+                {
+                    "range_days": range_days,
+                    "facility_id": facility_id,
+                    "max_rows": max_rows,
+                    "truncated": truncated,
+                },
             )
         except (psycopg2.Error, ValueError) as e:
             logger.error("Error in get_errors_summary: %s", e)
@@ -509,7 +540,13 @@ class RedshiftDataSource(TrackmanDataSource):
             result = self._execute_query(query, params)
             truncated = len(result["rows"]) >= max_rows
             return self._format_result(
-                result, {"range_days": range_days, "facility_id": facility_id, "max_rows": max_rows, "truncated": truncated}
+                result,
+                {
+                    "range_days": range_days,
+                    "facility_id": facility_id,
+                    "max_rows": max_rows,
+                    "truncated": truncated,
+                },
             )
         except (psycopg2.Error, ValueError) as e:
             logger.error("Error in get_connectivity_summary: %s", e)
@@ -716,7 +753,9 @@ class RedshiftDataSource(TrackmanDataSource):
             with conn.cursor() as cur:
                 cur.execute(sql_query)
                 rows = cur.fetchall()
-                columns = [desc[0] for desc in cur.description] if cur.description else []
+                columns = (
+                    [desc[0] for desc in cur.description] if cur.description else []
+                )
 
             truncated = len(rows) >= max_rows
             return {

@@ -48,17 +48,26 @@ class ExcelDataSource(TrackmanDataSource):
                 return
 
             # Find all Excel files
-            excel_files = list(self.data_dir.glob("*.xlsx")) + list(self.data_dir.glob("*.xls"))
+            excel_files = list(self.data_dir.glob("*.xlsx")) + list(
+                self.data_dir.glob("*.xls")
+            )
 
             if not excel_files:
                 logger.warning(f"No Excel files found in {self.data_dir}")
                 self._initialize_empty_data()
                 return
 
-            logger.info(f"Found {len(excel_files)} Excel file(s): {[f.name for f in excel_files]}")
+            logger.info(
+                f"Found {len(excel_files)} Excel file(s): {[f.name for f in excel_files]}"
+            )
 
             # Initialize accumulators for each sheet type
-            expected_sheets = ["errors", "connectivity", "facility_metadata", "data_quality"]
+            expected_sheets = [
+                "errors",
+                "connectivity",
+                "facility_metadata",
+                "data_quality",
+            ]
             sheet_dataframes = {sheet: [] for sheet in expected_sheets}
 
             # Load data from each file
@@ -73,12 +82,18 @@ class ExcelDataSource(TrackmanDataSource):
 
                             # Convert timestamp columns to datetime
                             if "timestamp" in df.columns:
-                                df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+                                df["timestamp"] = pd.to_datetime(
+                                    df["timestamp"], errors="coerce"
+                                )
 
                             sheet_dataframes[sheet_name].append(df)
-                            logger.info(f"  Loaded sheet '{sheet_name}' with {len(df)} rows")
+                            logger.info(
+                                f"  Loaded sheet '{sheet_name}' with {len(df)} rows"
+                            )
                         else:
-                            logger.debug(f"  Sheet '{sheet_name}' not found in {excel_path.name}")
+                            logger.debug(
+                                f"  Sheet '{sheet_name}' not found in {excel_path.name}"
+                            )
 
                 except Exception as e:
                     logger.error(f"Error loading file {excel_path.name}: {e}")
@@ -92,9 +107,13 @@ class ExcelDataSource(TrackmanDataSource):
                     # Remove duplicate rows
                     merged_df = merged_df.drop_duplicates()
                     self._data[sheet_name] = merged_df
-                    logger.info(f"Merged sheet '{sheet_name}': {len(merged_df)} total rows")
+                    logger.info(
+                        f"Merged sheet '{sheet_name}': {len(merged_df)} total rows"
+                    )
                 else:
-                    logger.warning(f"No data found for sheet '{sheet_name}' across all files")
+                    logger.warning(
+                        f"No data found for sheet '{sheet_name}' across all files"
+                    )
                     self._data[sheet_name] = pd.DataFrame()
 
             logger.info("Excel data loaded and merged successfully")
@@ -205,10 +224,9 @@ class ExcelDataSource(TrackmanDataSource):
                 )
 
             # Count error messages and get most severe severity for each
-            error_summary = (
-                df.groupby(["error_message", "error_code"], as_index=False)
-                .agg(count=("error_message", "size"), severity=("severity", "first"))
-            )
+            error_summary = df.groupby(
+                ["error_message", "error_code"], as_index=False
+            ).agg(count=("error_message", "size"), severity=("severity", "first"))
 
             # Sort by count and limit
             error_summary = error_summary.sort_values("count", ascending=False).head(

@@ -66,17 +66,25 @@ class TrackmanAnalysisTool:
             if intent == "errors_summary":
                 return data_source.get_errors_summary(range_days, facility_id or None)
             elif intent == "top_error_messages":
-                return data_source.get_top_error_messages(range_days, limit, facility_id or None)
+                return data_source.get_top_error_messages(
+                    range_days, limit, facility_id or None
+                )
             elif intent == "connectivity_summary":
-                return data_source.get_connectivity_summary(range_days, facility_id or None)
+                return data_source.get_connectivity_summary(
+                    range_days, facility_id or None
+                )
             elif intent == "disconnect_reasons":
-                return data_source.get_disconnect_reasons(range_days, facility_id or None)
+                return data_source.get_disconnect_reasons(
+                    range_days, facility_id or None
+                )
             elif intent == "facility_summary":
                 if not facility_id:
                     return {"error": "facility_id required for facility_summary"}
                 return data_source.get_facility_summary(facility_id, range_days)
             elif intent == "data_quality_summary":
-                return data_source.get_data_quality_summary(range_days, facility_id or None)
+                return data_source.get_data_quality_summary(
+                    range_days, facility_id or None
+                )
             else:
                 return {"error": f"Unknown intent: {intent}"}
         except Exception as e:
@@ -107,21 +115,21 @@ class TrackmanAnalysisTool:
 
         return "\n".join(lines)
 
-    def _synthesize_results(
-        self, question: str, query_results: List[Dict]
-    ) -> Dict:
+    def _synthesize_results(self, question: str, query_results: List[Dict]) -> Dict:
         """Use LLM to synthesize multiple query results into insights."""
         formatted_results = "\n\n".join(
-            self._format_query_result(r["data"], r["name"])
-            for r in query_results
+            self._format_query_result(r["data"], r["name"]) for r in query_results
         )
 
         messages = [
             {"role": "system", "content": "You are a helpful data analyst."},
-            {"role": "user", "content": SYNTHESIS_PROMPT.format(
-                question=question,
-                query_results=formatted_results,
-            )},
+            {
+                "role": "user",
+                "content": SYNTHESIS_PROMPT.format(
+                    question=question,
+                    query_results=formatted_results,
+                ),
+            },
         ]
 
         response = self.llm_helper.get_chat_completion(messages)
@@ -132,9 +140,7 @@ class TrackmanAnalysisTool:
             "completion_tokens": response.usage.completion_tokens,
         }
 
-    def analyze_facility_health(
-        self, facility_id: str, range_days: int = 30
-    ) -> Answer:
+    def analyze_facility_health(self, facility_id: str, range_days: int = 30) -> Answer:
         """
         Comprehensive health analysis for a specific facility.
 
@@ -153,14 +159,30 @@ class TrackmanAnalysisTool:
         try:
             # Run multiple queries
             queries = [
-                {"name": "Error Summary", "data": self._run_intent_query(
-                    "errors_summary", range_days, facility_id)},
-                {"name": "Top Errors", "data": self._run_intent_query(
-                    "top_error_messages", range_days, facility_id, limit=5)},
-                {"name": "Connectivity", "data": self._run_intent_query(
-                    "connectivity_summary", range_days, facility_id)},
-                {"name": "Data Quality", "data": self._run_intent_query(
-                    "data_quality_summary", range_days, facility_id)},
+                {
+                    "name": "Error Summary",
+                    "data": self._run_intent_query(
+                        "errors_summary", range_days, facility_id
+                    ),
+                },
+                {
+                    "name": "Top Errors",
+                    "data": self._run_intent_query(
+                        "top_error_messages", range_days, facility_id, limit=5
+                    ),
+                },
+                {
+                    "name": "Connectivity",
+                    "data": self._run_intent_query(
+                        "connectivity_summary", range_days, facility_id
+                    ),
+                },
+                {
+                    "name": "Data Quality",
+                    "data": self._run_intent_query(
+                        "data_quality_summary", range_days, facility_id
+                    ),
+                },
             ]
 
             # Synthesize results
@@ -198,14 +220,22 @@ class TrackmanAnalysisTool:
             queries = []
 
             for fac_id in facility_ids[:5]:  # Limit to 5 facilities
-                queries.append({
-                    "name": f"{fac_id} - Errors",
-                    "data": self._run_intent_query("errors_summary", range_days, fac_id),
-                })
-                queries.append({
-                    "name": f"{fac_id} - Connectivity",
-                    "data": self._run_intent_query("connectivity_summary", range_days, fac_id),
-                })
+                queries.append(
+                    {
+                        "name": f"{fac_id} - Errors",
+                        "data": self._run_intent_query(
+                            "errors_summary", range_days, fac_id
+                        ),
+                    }
+                )
+                queries.append(
+                    {
+                        "name": f"{fac_id} - Connectivity",
+                        "data": self._run_intent_query(
+                            "connectivity_summary", range_days, fac_id
+                        ),
+                    }
+                )
 
             # Synthesize comparison
             synthesis = self._synthesize_results(question, queries)
@@ -245,14 +275,26 @@ class TrackmanAnalysisTool:
         try:
             # Get current period data
             if metric == "errors":
-                current = self._run_intent_query("errors_summary", range_days, facility_id)
-                previous = self._run_intent_query("errors_summary", range_days * 2, facility_id)
+                current = self._run_intent_query(
+                    "errors_summary", range_days, facility_id
+                )
+                previous = self._run_intent_query(
+                    "errors_summary", range_days * 2, facility_id
+                )
             elif metric == "connectivity":
-                current = self._run_intent_query("connectivity_summary", range_days, facility_id)
-                previous = self._run_intent_query("connectivity_summary", range_days * 2, facility_id)
+                current = self._run_intent_query(
+                    "connectivity_summary", range_days, facility_id
+                )
+                previous = self._run_intent_query(
+                    "connectivity_summary", range_days * 2, facility_id
+                )
             else:
-                current = self._run_intent_query("data_quality_summary", range_days, facility_id)
-                previous = self._run_intent_query("data_quality_summary", range_days * 2, facility_id)
+                current = self._run_intent_query(
+                    "data_quality_summary", range_days, facility_id
+                )
+                previous = self._run_intent_query(
+                    "data_quality_summary", range_days * 2, facility_id
+                )
 
             queries = [
                 {"name": f"Current Period ({range_days} days)", "data": current},
@@ -261,8 +303,9 @@ class TrackmanAnalysisTool:
 
             # Synthesize trend analysis
             synthesis = self._synthesize_results(
-                question + ". Compare current period to previous period and identify trends.",
-                queries
+                question
+                + ". Compare current period to previous period and identify trends.",
+                queries,
             )
             total_prompt_tokens += synthesis["prompt_tokens"]
             total_completion_tokens += synthesis["completion_tokens"]
@@ -299,19 +342,36 @@ class TrackmanAnalysisTool:
 
         try:
             queries = [
-                {"name": "Errors", "data": self._run_intent_query(
-                    "errors_summary", range_days, facility_id)},
-                {"name": "Top Errors", "data": self._run_intent_query(
-                    "top_error_messages", range_days, facility_id, limit=10)},
-                {"name": "Connectivity", "data": self._run_intent_query(
-                    "connectivity_summary", range_days, facility_id)},
-                {"name": "Disconnect Reasons", "data": self._run_intent_query(
-                    "disconnect_reasons", range_days, facility_id)},
+                {
+                    "name": "Errors",
+                    "data": self._run_intent_query(
+                        "errors_summary", range_days, facility_id
+                    ),
+                },
+                {
+                    "name": "Top Errors",
+                    "data": self._run_intent_query(
+                        "top_error_messages", range_days, facility_id, limit=10
+                    ),
+                },
+                {
+                    "name": "Connectivity",
+                    "data": self._run_intent_query(
+                        "connectivity_summary", range_days, facility_id
+                    ),
+                },
+                {
+                    "name": "Disconnect Reasons",
+                    "data": self._run_intent_query(
+                        "disconnect_reasons", range_days, facility_id
+                    ),
+                },
             ]
 
             synthesis = self._synthesize_results(
-                question + ". Look for patterns: do high error counts correlate with connectivity issues?",
-                queries
+                question
+                + ". Look for patterns: do high error counts correlate with connectivity issues?",
+                queries,
             )
             total_prompt_tokens += synthesis["prompt_tokens"]
             total_completion_tokens += synthesis["completion_tokens"]

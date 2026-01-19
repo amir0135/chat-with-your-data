@@ -27,7 +27,10 @@ from dotenv import load_dotenv
 
 # Add parent path for imports
 import sys
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent / "code" / "backend"))
+
+sys.path.insert(
+    0, str(pathlib.Path(__file__).parent.parent.parent / "code" / "backend")
+)
 
 from batch.utilities.helpers.trackman.redshift_config import (
     ALLOWED_TABLES,
@@ -44,6 +47,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # Custom SQL Evaluators
 # ============================================================================
+
 
 class SQLValidityEvaluator:
     """Evaluates whether generated SQL is syntactically valid and safe."""
@@ -88,7 +92,9 @@ class SQLValidityEvaluator:
     def _extract_sql(self, text: str) -> Optional[str]:
         """Extract SQL from response text."""
         # Try to find SQL in code blocks
-        code_block_match = re.search(r"```(?:sql)?\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE)
+        code_block_match = re.search(
+            r"```(?:sql)?\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE
+        )
         if code_block_match:
             return code_block_match.group(1).strip()
 
@@ -124,7 +130,9 @@ class SchemaGroundednessEvaluator:
 
         # Extract tables used
         tables_used = self._extract_tables(sql)
-        invalid_tables = [t for t in tables_used if t.lower() not in self.allowed_tables]
+        invalid_tables = [
+            t for t in tables_used if t.lower() not in self.allowed_tables
+        ]
 
         if invalid_tables:
             return {
@@ -199,7 +207,9 @@ class SQLExecutionEvaluator:
 
         # Real execution mode
         try:
-            from batch.utilities.helpers.trackman.data_source_factory import get_data_source
+            from batch.utilities.helpers.trackman.data_source_factory import (
+                get_data_source,
+            )
 
             data_source = get_data_source()
             result = data_source.execute_custom_query(response, max_rows=5)
@@ -225,6 +235,7 @@ class SQLExecutionEvaluator:
 # ============================================================================
 # SQL Query Evaluation Runner
 # ============================================================================
+
 
 class SQLQueryEvaluationRunner:
     """Runs comprehensive evaluation of SQL generation quality."""
@@ -272,21 +283,27 @@ class SQLQueryEvaluationRunner:
                 sql_result = tool.generate_sql_from_question(question, use_cache=False)
                 answer = tool.query_with_natural_language(question, max_rows=10)
 
-                results.append({
-                    "query": question,
-                    "sql": sql_result.get("sql", ""),
-                    "response": answer.answer if hasattr(answer, 'answer') else str(answer),
-                    "sql_success": sql_result.get("success", False),
-                    "cached": sql_result.get("cached", False),
-                })
+                results.append(
+                    {
+                        "query": question,
+                        "sql": sql_result.get("sql", ""),
+                        "response": (
+                            answer.answer if hasattr(answer, "answer") else str(answer)
+                        ),
+                        "sql_success": sql_result.get("success", False),
+                        "cached": sql_result.get("cached", False),
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "query": question,
-                    "sql": "",
-                    "response": f"Error: {str(e)}",
-                    "sql_success": False,
-                    "cached": False,
-                })
+                results.append(
+                    {
+                        "query": question,
+                        "sql": "",
+                        "response": f"Error: {str(e)}",
+                        "sql_success": False,
+                        "cached": False,
+                    }
+                )
 
         return pd.DataFrame(results)
 
@@ -310,9 +327,15 @@ class SQLQueryEvaluationRunner:
             }
 
             # Run SQL-specific evaluators on the SQL column
-            validity = self.sql_validity(query=row["query"], response=row.get("sql", ""))
-            groundedness = self.schema_groundedness(query=row["query"], response=row.get("sql", ""))
-            execution = self.sql_execution(query=row["query"], response=row.get("sql", ""))
+            validity = self.sql_validity(
+                query=row["query"], response=row.get("sql", "")
+            )
+            groundedness = self.schema_groundedness(
+                query=row["query"], response=row.get("sql", "")
+            )
+            execution = self.sql_execution(
+                query=row["query"], response=row.get("sql", "")
+            )
 
             row_result.update(validity)
             row_result.update(groundedness)
@@ -321,14 +344,18 @@ class SQLQueryEvaluationRunner:
             # Run LLM evaluators on the response column if available
             if self.relevance and row.get("response"):
                 try:
-                    rel_result = self.relevance(query=row["query"], response=row["response"])
+                    rel_result = self.relevance(
+                        query=row["query"], response=row["response"]
+                    )
                     row_result["relevance"] = rel_result.get("relevance", 0)
                 except Exception:
                     row_result["relevance"] = None
 
             if self.coherence and row.get("response"):
                 try:
-                    coh_result = self.coherence(query=row["query"], response=row["response"])
+                    coh_result = self.coherence(
+                        query=row["query"], response=row["response"]
+                    )
                     row_result["coherence"] = coh_result.get("coherence", 0)
                 except Exception:
                     row_result["coherence"] = None

@@ -73,7 +73,9 @@ def configure_azure_ai_tracing() -> bool:
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-def trace_operation(operation_name: str = "", attributes: Optional[Dict] = None) -> Callable[[F], F]:
+def trace_operation(
+    operation_name: str = "", attributes: Optional[Dict] = None
+) -> Callable[[F], F]:
     """
     Decorator to trace function execution with Azure AI Foundry.
 
@@ -86,6 +88,7 @@ def trace_operation(operation_name: str = "", attributes: Optional[Dict] = None)
         def generate_sql(question: str) -> str:
             ...
     """
+
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -120,6 +123,7 @@ def trace_operation(operation_name: str = "", attributes: Optional[Dict] = None)
                 return func(*args, **kwargs)
 
         return wrapper  # type: ignore
+
     return decorator
 
 
@@ -167,7 +171,7 @@ class SemanticCache:
             # Check if semantic cache index exists
             self._index_name = os.getenv(
                 "AZURE_SEARCH_SEMANTIC_CACHE_INDEX",
-                f"{self.env_helper.AZURE_SEARCH_INDEX}-sql-cache"
+                f"{self.env_helper.AZURE_SEARCH_INDEX}-sql-cache",
             )
 
             logger.info(f"Semantic cache initialized with index: {self._index_name}")
@@ -226,13 +230,23 @@ class SemanticCache:
         best_match = None
         best_similarity = 0.0
 
-        for key, (sql, timestamp, cached_question, cached_embedding) in self._cache.items():
+        for key, (
+            sql,
+            timestamp,
+            cached_question,
+            cached_embedding,
+        ) in self._cache.items():
             if time.time() - timestamp >= self._ttl:
                 continue
 
             if cached_embedding:
-                similarity = self._cosine_similarity(question_embedding, cached_embedding)
-                if similarity > best_similarity and similarity >= self._similarity_threshold:
+                similarity = self._cosine_similarity(
+                    question_embedding, cached_embedding
+                )
+                if (
+                    similarity > best_similarity
+                    and similarity >= self._similarity_threshold
+                ):
                     best_similarity = similarity
                     best_match = sql
 
@@ -257,10 +271,9 @@ class SemanticCache:
         max_size = 1000
         if len(self._cache) >= max_size:
             # Remove oldest entries
-            oldest_keys = sorted(
-                self._cache.keys(),
-                key=lambda k: self._cache[k][1]
-            )[:100]
+            oldest_keys = sorted(self._cache.keys(), key=lambda k: self._cache[k][1])[
+                :100
+            ]
             for k in oldest_keys:
                 del self._cache[k]
 
@@ -275,7 +288,8 @@ class SemanticCache:
     def stats(self) -> Dict:
         """Get cache statistics."""
         valid_entries = sum(
-            1 for _, (_, timestamp, _, _) in self._cache.items()
+            1
+            for _, (_, timestamp, _, _) in self._cache.items()
             if time.time() - timestamp < self._ttl
         )
         return {
@@ -342,6 +356,7 @@ class SQLContentSafetyChecker:
             key = os.getenv("AZURE_CONTENT_SAFETY_KEY", "")
             if key:
                 from azure.core.credentials import AzureKeyCredential
+
                 self._client = ContentSafetyClient(endpoint, AzureKeyCredential(key))
             else:
                 credential = DefaultAzureCredential()

@@ -68,9 +68,7 @@ class ChatPlugin:
             str,
             "The question exactly as asked, e.g., 'Which facilities have the most errors?'",
         ],
-        max_rows: Annotated[
-            int, "Maximum rows to return (default: 50, max: 100)"
-        ] = 50,
+        max_rows: Annotated[int, "Maximum rows to return (default: 50, max: 100)"] = 50,
     ) -> Answer:
         return TrackmanNLQueryTool().query_with_natural_language(
             question=question,
@@ -99,9 +97,7 @@ class ChatPlugin:
             str,
             "'errors', 'connectivity', or 'data_quality'",
         ] = "errors",
-        range_days: Annotated[
-            int, "Days to analyze (default: 30)"
-        ] = 30,
+        range_days: Annotated[int, "Days to analyze (default: 30)"] = 30,
     ) -> Answer:
         tool = TrackmanAnalysisTool()
 
