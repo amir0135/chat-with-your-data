@@ -199,11 +199,76 @@ SCHEMA_DESCRIPTION = {
     },
 }
 
+# Keywords that map to tables for smart schema retrieval
+TABLE_KEYWORDS = {
+    "error_logs": [
+        "error", "errors", "alert", "alerts", "problem", "problems",
+        "issue", "issues", "failure", "failures", "critical", "warning",
+        "message", "tps", "event_level", "severity"
+    ],
+    "connectivity_logs": [
+        "connectivity", "connection", "connections", "disconnect",
+        "disconnection", "disconnections", "network", "offline",
+        "online", "speed", "mbps", "wifi", "ethernet"
+    ],
+    "sessions": [
+        "session", "sessions", "stroke", "strokes", "usage",
+        "activity", "clubspeed", "ballspeed", "radar", "bay",
+        "shotanalysis", "vgrange", "courseplay"
+    ],
+    "indoor_kpis": [
+        "kpi", "kpis", "metric", "metrics", "performance",
+        "occupancy", "health", "summary", "overview", "facility"
+    ],
+}
 
-def get_schema_for_prompt() -> str:
-    """Generate schema description for LLM prompt."""
+
+def get_relevant_tables(question: str) -> list:
+    """
+    Determine which tables are relevant based on question keywords.
+
+    Args:
+        question: The natural language question
+
+    Returns:
+        List of relevant table names, or all tables if no match
+    """
+    question_lower = question.lower()
+    relevant = set()
+
+    for table, keywords in TABLE_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in question_lower:
+                relevant.add(table)
+                break
+
+    # If no specific tables matched, return all (for general questions)
+    if not relevant:
+        return list(ALLOWED_TABLES.keys())
+
+    return list(relevant)
+
+
+def get_schema_for_prompt(question: str = None) -> str:
+    """
+    Generate schema description for LLM prompt.
+
+    Args:
+        question: Optional question to filter relevant tables.
+                  If None, includes all tables.
+
+    Returns:
+        Schema description string for the prompt
+    """
+    # Determine which tables to include
+    if question:
+        tables_to_include = get_relevant_tables(question)
+    else:
+        tables_to_include = list(ALLOWED_TABLES.keys())
+
     lines = ["Available tables and columns:\n"]
-    for table, columns in ALLOWED_TABLES.items():
+    for table in tables_to_include:
+        columns = ALLOWED_TABLES.get(table, [])
         desc = SCHEMA_DESCRIPTION.get(table, {}).get("description", "")
         lines.append(f"### {table}")
         if desc:
@@ -259,6 +324,31 @@ SELECT message, COUNT(*) as count FROM error_logs WHERE error_timestamp >= CURRE
 - "Which facilities have the most problems" ->
 SELECT facility_name, COUNT(*) as error_count FROM error_logs WHERE error_timestamp >= CURRENT_DATE - INTERVAL '7 days' GROUP BY facility_name ORDER BY error_count DESC LIMIT 20
 """
+
+
+def get_sql_generation_prompt() -> str:
+    """
+    Load SQL generation prompt from file with fallback to hardcoded default.
+
+    Prompt is loaded from:
+    1. prompts/sql_generation.txt file (preferred, easy to edit)
+    2. SQL_GENERATION_SYSTEM_PROMPT constant (fallback)
+
+    Returns:
+        str: The SQL generation system prompt
+    """
+    import os
+
+    prompt_file = os.path.join(
+        os.path.dirname(__file__), "prompts", "sql_generation.txt"
+    )
+
+    try:
+        with open(prompt_file, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        # Fall back to hardcoded default if file not found
+        return SQL_GENERATION_SYSTEM_PROMPT
 
 
 # Dangerous SQL patterns to block

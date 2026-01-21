@@ -613,6 +613,39 @@ azure-core = ">=1.28.0,<2.0.0"
 isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
+name = "azure-ai-evaluation"
+version = "1.14.0"
+description = "Microsoft Azure Evaluation Library for Python"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "azure_ai_evaluation-1.14.0-py3-none-any.whl", hash = "sha256:1785f9be28517839ab9d30a03893951f7c9b530500d939d0ae51dde3aa1478b0"},
+    {file = "azure_ai_evaluation-1.14.0.tar.gz", hash = "sha256:2a5681805b7cde65ad663f34d0f647d28498dd9395f7e2ce0789320c26664dae"},
+]
+
+[package.dependencies]
+aiohttp = ">=3.0"
+azure-core = ">=1.31.0"
+azure-identity = ">=1.19.0"
+azure-storage-blob = ">=12.19.0"
+httpx = ">=0.27.2"
+Jinja2 = ">=3.1.6"
+msrest = ">=0.6.21"
+nltk = ">=3.9.1"
+openai = ">=1.108.0"
+pandas = [
+    {version = ">=2.1.2,<3.0.0", markers = "python_version < \"3.13\""},
+    {version = ">=2.2.3,<3.0.0", markers = "python_version == \"3.13\""},
+    {version = ">=2.3.3,<3.0.0", markers = "python_version >= \"3.14\""},
+]
+pyjwt = ">=2.8.0"
+"ruamel.yaml" = ">=0.17.10,<1.0.0"
+
+[package.extras]
+opentelemetry = ["azure-monitor-opentelemetry-exporter (>=1.0.0b17)", "opentelemetry-sdk (>=1.17.0)"]
+redteam = ["duckdb (==1.3.2)", "pyrit (==0.8.1)"]
+
+[[package]]
 name = "azure-ai-formrecognizer"
 version = "3.3.3"
 description = "Microsoft Azure Form Recognizer Client Library for Python"
@@ -2729,6 +2762,17 @@ files = [
 ]
 
 [[package]]
+name = "joblib"
+version = "1.5.3"
+description = "Lightweight pipelining with Python functions"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "joblib-1.5.3-py3-none-any.whl", hash = "sha256:5fc3c5039fc5ca8c0276333a188bbd59d6b7ab37fe6632daa76bc7f9ec18e713"},
+    {file = "joblib-1.5.3.tar.gz", hash = "sha256:8561a3269e6801106863fd0d6d84bb737be9e7631e33aaed3fb9ce5953688da3"},
+]
+
+[[package]]
 name = "json5"
 version = "0.12.1"
 description = "A Python implementation of the JSON5 data format."
@@ -3975,6 +4019,31 @@ files = [
     {file = "nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c"},
     {file = "nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe"},
 ]
+
+[[package]]
+name = "nltk"
+version = "3.9.2"
+description = "Natural Language Toolkit"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "nltk-3.9.2-py3-none-any.whl", hash = "sha256:1e209d2b3009110635ed9709a67a1a3e33a10f799490fa71cf4bec218c11c88a"},
+    {file = "nltk-3.9.2.tar.gz", hash = "sha256:0f409e9b069ca4177c1903c3e843eef90c7e92992fa4931ae607da6de49e1419"},
+]
+
+[package.dependencies]
+click = "*"
+joblib = "*"
+regex = ">=2021.8.3"
+tqdm = "*"
+
+[package.extras]
+all = ["matplotlib", "numpy", "pyparsing", "python-crfsuite", "requests", "scikit-learn", "scipy", "twython"]
+corenlp = ["requests"]
+machine-learning = ["numpy", "python-crfsuite", "scikit-learn", "scipy"]
+plot = ["matplotlib"]
+tgrep = ["pyparsing"]
+twitter = ["twython"]
 
 [[package]]
 name = "nodeenv"
@@ -7909,4 +7978,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0343a69a0fa62479b87f22299e72f3ad6034297304b110b95f66bd677b6b965a"
+content-hash = "b99f20c21cde19e299b309c2e07022031061181955f55e9fea67a93ce524b915"

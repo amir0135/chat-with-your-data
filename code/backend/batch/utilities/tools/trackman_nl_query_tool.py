@@ -16,8 +16,8 @@ from ..common.answer import Answer
 from ..helpers.llm_helper import LLMHelper
 from ..helpers.trackman.data_source_factory import get_data_source
 from ..helpers.trackman.redshift_config import (
-    SQL_GENERATION_SYSTEM_PROMPT,
     get_schema_for_prompt,
+    get_sql_generation_prompt,
     validate_generated_sql,
     add_limit_if_missing,
 )
@@ -182,8 +182,8 @@ class TrackmanNLQueryTool:
                         "cache_type": "pattern",
                     }
 
-            # Try to use dynamic schema if available
-            schema_context = get_schema_for_prompt()  # Default static schema
+            # Get schema context - use smart retrieval based on question
+            schema_context = get_schema_for_prompt(question)  # Smart schema based on keywords
             try:
                 data_source = get_data_source()
                 if hasattr(data_source, "get_dynamic_schema_for_prompt"):
@@ -194,7 +194,9 @@ class TrackmanNLQueryTool:
             except Exception as e:
                 logger.debug(f"Dynamic schema not available, using static: {e}")
 
-            system_prompt = SQL_GENERATION_SYSTEM_PROMPT.format(
+            # Use configurable prompt with fallback to default
+            base_prompt = get_sql_generation_prompt()
+            system_prompt = base_prompt.format(
                 schema=schema_context,
                 current_date=datetime.now().strftime("%Y-%m-%d"),
             )
