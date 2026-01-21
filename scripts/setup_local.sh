@@ -336,7 +336,7 @@ if [ -n "$USER_ID" ] && [ -n "$STORAGE_ACCOUNT" ]; then
             --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${AZURE_RESOURCE_GROUP}/providers/Microsoft.Search/searchServices/${SEARCH_SERVICE}" \
             2>/dev/null || echo "  (Role may already be assigned)"
     fi
-    
+
     echo -e "${GREEN}✓ Azure RBAC roles configured${NC}"
 else
     echo -e "${YELLOW}⚠ Could not configure RBAC roles automatically. You may need to assign them manually.${NC}"

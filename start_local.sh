@@ -2,7 +2,7 @@
 # =============================================================================
 # Local Development Startup Script
 # =============================================================================
-# Starts all services: Chat UI (Flask + Vite), Admin UI (Streamlit), 
+# Starts all services: Chat UI (Flask + Vite), Admin UI (Streamlit),
 # Azure Functions, and PostgreSQL (for TrackMan testing)
 #
 # Prerequisites:

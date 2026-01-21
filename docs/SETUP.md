@@ -17,7 +17,7 @@ This guide explains how to set up the **Chat With Your Data** solution accelerat
    azd auth login
    azd up
    ```
-   
+
    Or use the "Deploy to Azure" button in the README.
 
 3. **Run the local setup script** (pulls config from your Azure deployment)
