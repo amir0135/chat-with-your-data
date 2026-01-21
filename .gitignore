@@ -434,3 +434,4 @@ Pipfile.lock
 
 data/testtrack/*.csv
 data/testtrack/*.xlsx
+.DS_Store
