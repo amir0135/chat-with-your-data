@@ -33,8 +33,9 @@ def test_document_loading_read():
     assert data[9].source == url
 
 
+@pytest.mark.functional
 def test_document_loading_web():
-    # WebLoad
+    # WebLoad - requires network access
     document_loading = DocumentLoading()
     url = "https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search"
     data = document_loading.load(url, LoadingSettings({"strategy": "web"}))
