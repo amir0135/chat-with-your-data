@@ -24,6 +24,7 @@ urlFragment: chat-with-your-data-solution-accelerator
 
 # Chat with your data - Solution accelerator
 
+> **🚀 Fork with TrackMan Integration**: This fork includes additional TrackMan/Redshift integration for querying operational data via natural language. See [TrackMan Integration](#trackman-integration) and [Local Setup Guide](docs/SETUP.md).
 
  ##### Table of Contents
 - [Chat with your data - Solution accelerator](#chat-with-your-data---solution-accelerator)
@@ -189,11 +190,11 @@ To review Cosmos DB configuration overview and steps, follow the link [here](doc
 
 <br/>
 
-The "Deploy to Azure" button offers a one-click deployment where you don’t have to clone the code. If you would like a developer experience instead, follow the [local deployment instructions](./docs/LOCAL_DEPLOYMENT.md)
+The "Deploy to Azure" button offers a one-click deployment where you don't have to clone the code. If you would like a developer experience instead, follow the [local deployment instructions](./docs/LOCAL_DEPLOYMENT.md) or the [quick setup guide](./docs/SETUP.md).
 
 Once you deploy to Azure, you will have the option to select PostgreSQL or Cosmos DB, see screenshot below.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fchat-with-your-data-solution-accelerator%2Frefs%2Fheads%2Fmain%2Finfra%2Fmain.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Famir0135%2Fchat-with-your-data%2Frefs%2Fheads%2Fmain%2Finfra%2Fmain.json)
 
 Select either "PostgreSQL" or "Cosmos DB":
 ![Solution Architecture - DB Selection](/docs/images/db_selection.png)
@@ -240,8 +241,59 @@ When deploying the solution using the "Deploy to Azure" button, you'll see two f
 
     ![A screenshot of the chat app.](./docs/images/web-unstructureddata.png)
 
+---
 
+## TrackMan Integration
 
+This fork includes **TrackMan data integration** for querying operational data (errors, connectivity, sessions) via natural language.
+
+### Features
+- 🗣️ **Natural Language to SQL**: Ask questions in plain English, get SQL results
+- 📊 **Smart Schema Retrieval**: Only loads relevant database tables based on your question
+- 🔌 **Dual Database Support**: Works with PostgreSQL (local testing) or AWS Redshift (production)
+- 🤖 **AI-Powered Analysis**: Multi-step analysis of facility health, trends, and comparisons
+
+### Example Queries
+```
+"How many total errors occurred in the last 7 days?"
+"Which facility has the most errors?"
+"Show connectivity status for all facilities"
+"What's the average session duration this month?"
+```
+
+### Local Development with TrackMan
+
+1. **Quick Setup** (after deploying to Azure):
+   ```bash
+   git clone https://github.com/amir0135/chat-with-your-data.git
+   cd chat-with-your-data
+   ./scripts/setup_local.sh   # Pulls config from Azure, installs deps
+   ./start_local.sh            # Starts all services + PostgreSQL
+   ```
+
+2. **Test TrackMan Queries**: Open http://localhost:5173 and ask database questions
+
+See [docs/SETUP.md](docs/SETUP.md) for detailed setup instructions.
+
+### Configuration
+
+TrackMan is enabled by default. Configure in `.env`:
+
+```bash
+# Enable/disable TrackMan queries
+USE_REDSHIFT=true
+
+# Local PostgreSQL (default for testing)
+REDSHIFT_HOST=localhost
+REDSHIFT_PORT=5432
+REDSHIFT_DB=trackman_test
+
+# Production Redshift
+# REDSHIFT_HOST=your-cluster.region.redshift.amazonaws.com
+# REDSHIFT_PORT=5439
+```
+
+---
 
 ![Supporting documentation](/docs/images/supportingDocuments.png)
 

@@ -1,6 +1,17 @@
 #!/bin/bash
-# Local development startup script
-# Starts all services: Chat UI (Flask + Vite), Admin UI (Streamlit), and Azure Functions
+# =============================================================================
+# Local Development Startup Script
+# =============================================================================
+# Starts all services: Chat UI (Flask + Vite), Admin UI (Streamlit), 
+# Azure Functions, and PostgreSQL (for TrackMan testing)
+#
+# Prerequisites:
+#   - Run ./scripts/setup_local.sh first (after azd up)
+#   - Or manually create .env and install dependencies
+#
+# Usage:
+#   ./start_local.sh
+# =============================================================================
 
 set -e
 
@@ -14,7 +25,54 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== Chat With Your Data - Local Development Environment ===${NC}"
+echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║   Chat With Your Data - Local Development Environment      ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+# =============================================================================
+# Pre-flight Checks
+# =============================================================================
+echo -e "${BLUE}[Preflight] Checking setup...${NC}"
+
+# Check if .env exists
+if [ ! -f ".env" ]; then
+    echo -e "${RED}✗ .env file not found.${NC}"
+    echo -e "${YELLOW}  Run ./scripts/setup_local.sh first, or copy .env.sample to .env${NC}"
+    exit 1
+fi
+
+# Check if .venv exists
+if [ ! -d ".venv" ]; then
+    echo -e "${RED}✗ Virtual environment not found.${NC}"
+    echo -e "${YELLOW}  Run ./scripts/setup_local.sh or 'poetry install' first${NC}"
+    exit 1
+fi
+
+# Check if node_modules exists
+if [ ! -d "code/frontend/node_modules" ]; then
+    echo -e "${YELLOW}⚠ Frontend dependencies not installed. Installing...${NC}"
+    cd code/frontend && npm install && cd ../..
+fi
+
+# Check if local.settings.json exists
+if [ ! -f "code/backend/batch/local.settings.json" ]; then
+    echo -e "${YELLOW}⚠ local.settings.json not found. Creating default...${NC}"
+    cat > code/backend/batch/local.settings.json << 'EOF'
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true"
+  },
+  "ConnectionStrings": {}
+}
+EOF
+    echo -e "${YELLOW}  Note: Document processing may not work without proper Azure storage config.${NC}"
+    echo -e "${YELLOW}  Run ./scripts/setup_local.sh for full Azure integration.${NC}"
+fi
+
+echo -e "${GREEN}✓ Setup checks passed${NC}"
 echo ""
 
 # Check if PostgreSQL container is running (for TrackMan/Redshift testing)
