@@ -5,7 +5,7 @@ from multiple data sources to answer complex analytical questions.
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from ..common.answer import Answer
 from ..helpers.llm_helper import LLMHelper

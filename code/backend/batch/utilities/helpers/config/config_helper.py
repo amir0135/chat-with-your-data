@@ -1,19 +1,20 @@
+"""Configuration helper module for managing application settings and document processors."""
 import os
 import json
 import logging
 import functools
 from string import Template
 
-from ..azure_blob_storage_client import AzureBlobStorageClient
-from ...document_chunking.chunking_strategy import ChunkingStrategy, ChunkingSettings
-from ...document_loading import LoadingSettings, LoadingStrategy
-from .embedding_config import EmbeddingConfig
-from ...orchestrator.orchestration_strategy import OrchestrationStrategy
-from ...orchestrator import OrchestrationSettings
-from ..env_helper import EnvHelper
-from .assistant_strategy import AssistantStrategy
-from .conversation_flow import ConversationFlow
-from .database_type import DatabaseType
+from backend.batch.utilities.helpers.azure_blob_storage_client import AzureBlobStorageClient
+from backend.batch.utilities.document_chunking.chunking_strategy import ChunkingStrategy, ChunkingSettings
+from backend.batch.utilities.document_loading import LoadingSettings, LoadingStrategy
+from backend.batch.utilities.helpers.config.embedding_config import EmbeddingConfig
+from backend.batch.utilities.orchestrator.orchestration_strategy import OrchestrationStrategy
+from backend.batch.utilities.orchestrator import OrchestrationSettings
+from backend.batch.utilities.helpers.env_helper import EnvHelper
+from backend.batch.utilities.helpers.config.assistant_strategy import AssistantStrategy
+from backend.batch.utilities.helpers.config.conversation_flow import ConversationFlow
+from backend.batch.utilities.helpers.config.database_type import DatabaseType
 
 CONFIG_CONTAINER_NAME = "config"
 CONFIG_FILE_NAME = "active.json"

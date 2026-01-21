@@ -11,11 +11,11 @@ import logging
 import os
 import time
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 from azure.identity import DefaultAzureCredential
 from azure.ai.contentsafety import ContentSafetyClient
-from azure.ai.contentsafety.models import AnalyzeTextOptions, TextCategory
+from azure.ai.contentsafety.models import AnalyzeTextOptions
 
 from .env_helper import EnvHelper
 
@@ -36,7 +36,7 @@ def configure_azure_ai_tracing() -> bool:
         bool: True if tracing was configured successfully
     """
     try:
-        env_helper = EnvHelper()
+        _ = EnvHelper()  # Validate environment is configured
 
         # Check if Application Insights is configured
         connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING", "")
@@ -46,7 +46,7 @@ def configure_azure_ai_tracing() -> bool:
 
         # Enable tracing for Azure AI SDK
         from azure.monitor.opentelemetry import configure_azure_monitor
-        from opentelemetry import trace
+        from opentelemetry import trace  # noqa: F401
         from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
         # Configure Azure Monitor exporter
@@ -418,7 +418,7 @@ class SQLContentSafetyChecker:
         for pattern in self._INJECTION_PATTERNS:
             if pattern in text_lower:
                 logger.warning(f"SQL injection pattern detected: {pattern}")
-                return False, f"Input contains potentially dangerous pattern"
+                return False, "Input contains potentially dangerous pattern"
 
         # Then check with Azure Content Safety if available
         if self._enabled and self._client:
@@ -433,7 +433,7 @@ class SQLContentSafetyChecker:
                             f"Content Safety flagged: {result.category} "
                             f"(severity: {result.severity})"
                         )
-                        return False, f"Content flagged as potentially harmful"
+                        return False, "Content flagged as potentially harmful"
 
             except Exception as e:
                 logger.error(f"Content Safety check failed: {e}")

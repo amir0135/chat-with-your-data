@@ -118,13 +118,16 @@ def test_get_env_var_array(monkeypatch: MonkeyPatch):
 
 
 def test_azure_speech_recognizer_languages_default(monkeypatch: MonkeyPatch):
-    # given - no env var set
+    # given - no env var set, prevent load_dotenv from reloading .env file
+    monkeypatch.delenv("AZURE_SPEECH_RECOGNIZER_LANGUAGES", raising=False)
 
-    # when
-    env_helper = EnvHelper()
+    # Patch load_dotenv to prevent it from reloading the .env file
+    with patch("backend.batch.utilities.helpers.env_helper.load_dotenv"):
+        # when
+        env_helper = EnvHelper()
 
-    # then
-    assert env_helper.AZURE_SPEECH_RECOGNIZER_LANGUAGES == ["en-US"]
+        # then
+        assert env_helper.AZURE_SPEECH_RECOGNIZER_LANGUAGES == ["en-US"]
 
 
 @pytest.mark.parametrize(

@@ -7,25 +7,35 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from code.backend.batch.utilities.helpers.trackman.excel_data_source import (
-    ExcelDataSource,
-)
-from code.backend.batch.utilities.helpers.trackman.redshift_config import (
+# Skip Excel tests if openpyxl is not installed
+try:
+    import openpyxl  # noqa: F401
+    HAS_OPENPYXL = True
+except ImportError:
+    HAS_OPENPYXL = False
+
+from backend.batch.utilities.helpers.trackman.redshift_config import (
     validate_columns,
     validate_table,
 )
-from code.backend.batch.utilities.helpers.trackman.redshift_data_source import (
+from backend.batch.utilities.helpers.trackman.redshift_data_source import (
     RedshiftDataSource,
 )
-from code.backend.batch.utilities.helpers.trackman.data_source_factory import (
+from backend.batch.utilities.helpers.trackman.data_source_factory import (
     get_data_source,
     reset_data_source,
 )
 
 
 @pytest.fixture
+@pytest.mark.skipif(not HAS_OPENPYXL, reason="openpyxl not installed")
 def sample_excel_data(tmp_path):
     """Create sample Excel file for testing."""
+    if not HAS_OPENPYXL:
+        pytest.skip("openpyxl not installed")
+
+    from backend.batch.utilities.helpers.trackman.excel_data_source import ExcelDataSource  # noqa: F401
+
     excel_path = tmp_path / "test_trackman_data.xlsx"
 
     # Create sample data
@@ -56,9 +66,11 @@ def sample_excel_data(tmp_path):
                 "power_loss",
                 "",
                 "timeout",
-            ]
-            * 2
-            + ["", "network_issue"],
+                "",
+                "network_issue",
+                "",
+                "power_loss",
+            ],
         }
     )
 
@@ -95,12 +107,19 @@ def sample_excel_data(tmp_path):
     return str(excel_path)
 
 
+@pytest.mark.skipif(not HAS_OPENPYXL, reason="openpyxl not installed")
 class TestExcelDataSource:
     """Tests for Excel data source."""
 
+    @pytest.fixture(autouse=True)
+    def setup_excel_import(self):
+        """Import ExcelDataSource for tests."""
+        from backend.batch.utilities.helpers.trackman.excel_data_source import ExcelDataSource
+        self.ExcelDataSource = ExcelDataSource
+
     def test_load_data(self, sample_excel_data):
         """Test loading data from Excel."""
-        ds = ExcelDataSource(sample_excel_data)
+        ds = self.ExcelDataSource(sample_excel_data)
         assert "errors" in ds._data
         assert "connectivity" in ds._data
         assert "facility_metadata" in ds._data
@@ -108,7 +127,7 @@ class TestExcelDataSource:
 
     def test_get_errors_summary(self, sample_excel_data):
         """Test errors summary query."""
-        ds = ExcelDataSource(sample_excel_data)
+        ds = self.ExcelDataSource(sample_excel_data)
         result = ds.get_errors_summary(range_days=30)
 
         assert result["metadata"]["source"] == "excel"
@@ -119,7 +138,7 @@ class TestExcelDataSource:
 
     def test_get_errors_summary_with_facility_filter(self, sample_excel_data):
         """Test errors summary with facility filter."""
-        ds = ExcelDataSource(sample_excel_data)
+        ds = self.ExcelDataSource(sample_excel_data)
         result = ds.get_errors_summary(range_days=30, facility_id="FAC001")
 
         assert result["metadata"]["rowCount"] >= 0
@@ -128,7 +147,7 @@ class TestExcelDataSource:
 
     def test_get_top_error_messages(self, sample_excel_data):
         """Test top error messages query."""
-        ds = ExcelDataSource(sample_excel_data)
+        ds = self.ExcelDataSource(sample_excel_data)
         result = ds.get_top_error_messages(range_days=30, limit=5)
 
         assert result["metadata"]["source"] == "excel"
@@ -138,7 +157,7 @@ class TestExcelDataSource:
 
     def test_get_connectivity_summary(self, sample_excel_data):
         """Test connectivity summary query."""
-        ds = ExcelDataSource(sample_excel_data)
+        ds = self.ExcelDataSource(sample_excel_data)
         result = ds.get_connectivity_summary(range_days=30)
 
         assert result["metadata"]["source"] == "excel"
@@ -147,7 +166,7 @@ class TestExcelDataSource:
 
     def test_get_disconnect_reasons(self, sample_excel_data):
         """Test disconnect reasons query."""
-        ds = ExcelDataSource(sample_excel_data)
+        ds = self.ExcelDataSource(sample_excel_data)
         result = ds.get_disconnect_reasons(range_days=30)
 
         assert result["metadata"]["source"] == "excel"
@@ -156,7 +175,7 @@ class TestExcelDataSource:
 
     def test_get_facility_summary(self, sample_excel_data):
         """Test facility summary query."""
-        ds = ExcelDataSource(sample_excel_data)
+        ds = self.ExcelDataSource(sample_excel_data)
         result = ds.get_facility_summary("FAC001", range_days=30)
 
         assert result["metadata"]["source"] == "excel"
@@ -166,7 +185,7 @@ class TestExcelDataSource:
 
     def test_get_data_quality_summary(self, sample_excel_data):
         """Test data quality summary query."""
-        ds = ExcelDataSource(sample_excel_data)
+        ds = self.ExcelDataSource(sample_excel_data)
         result = ds.get_data_quality_summary(range_days=30)
 
         assert result["metadata"]["source"] == "excel"
@@ -179,10 +198,10 @@ class TestRedshiftConfig:
 
     def test_validate_table_allowed(self):
         """Test validating allowed table."""
-        assert validate_table("errors") is True
-        assert validate_table("connectivity") is True
-        assert validate_table("facility_metadata") is True
-        assert validate_table("data_quality") is True
+        assert validate_table("error_logs") is True
+        assert validate_table("connectivity_logs") is True
+        assert validate_table("sessions") is True
+        assert validate_table("indoor_kpis") is True
 
     def test_validate_table_not_allowed(self):
         """Test validating disallowed table."""
@@ -191,12 +210,12 @@ class TestRedshiftConfig:
 
     def test_validate_columns_allowed(self):
         """Test validating allowed columns."""
-        assert validate_columns("errors", ["timestamp", "facility_id", "error_code"]) is True
+        assert validate_columns("error_logs", ["error_timestamp", "facility_id", "message"]) is True
 
     def test_validate_columns_not_allowed(self):
         """Test validating disallowed columns."""
         assert (
-            validate_columns("errors", ["timestamp", "secret_column"]) is False
+            validate_columns("error_logs", ["error_timestamp", "secret_column"]) is False
         )
 
 
@@ -251,7 +270,7 @@ class TestRedshiftDataSource:
             },
         ):
             ds = RedshiftDataSource()
-            result = ds.get_errors_summary(range_days=30)
+            _ = ds.get_errors_summary(range_days=30)  # noqa: F841
 
             # Verify parameterized query was called
             assert mock_cursor.execute.called
@@ -281,6 +300,7 @@ class TestRedshiftDataSource:
                 ds._validate_table_access("unauthorized_table")
 
 
+@pytest.mark.skipif(not HAS_OPENPYXL, reason="openpyxl not installed")
 class TestDataSourceFactory:
     """Tests for data source factory."""
 
@@ -290,6 +310,7 @@ class TestDataSourceFactory:
 
     def test_get_excel_data_source_default(self, sample_excel_data):
         """Test getting Excel data source by default."""
+        from backend.batch.utilities.helpers.trackman.excel_data_source import ExcelDataSource
         with patch.dict(os.environ, {"TRACKMAN_EXCEL_PATH": sample_excel_data}):
             ds = get_data_source()
             assert isinstance(ds, ExcelDataSource)
@@ -311,6 +332,7 @@ class TestDataSourceFactory:
 
     def test_fallback_to_excel_on_missing_vars(self, sample_excel_data):
         """Test fallback to Excel when Redshift vars missing."""
+        from backend.batch.utilities.helpers.trackman.excel_data_source import ExcelDataSource
         with patch.dict(
             os.environ,
             {"USE_REDSHIFT": "true", "TRACKMAN_EXCEL_PATH": sample_excel_data},
