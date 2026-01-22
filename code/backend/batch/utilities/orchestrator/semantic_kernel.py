@@ -12,7 +12,7 @@ from semantic_kernel.contents.utils.finish_reason import FinishReason
 from ..common.answer import Answer
 from ..helpers.llm_helper import LLMHelper
 from ..helpers.env_helper import EnvHelper
-from ..plugins.chat_plugin import ChatPlugin
+from ..plugins.chat_plugin import get_chat_plugin
 from ..plugins.post_answering_plugin import PostAnsweringPlugin
 from .orchestrator_base import OrchestratorBase
 
@@ -45,21 +45,16 @@ class SemanticKernelOrchestrator(OrchestratorBase):
 
         system_message = self.env_helper.SEMANTIC_KERNEL_SYSTEM_PROMPT
         if not system_message:
-            system_message = """You help employees to navigate private information sources and operational data.
-
-TOOL SELECTION RULES:
-- Use query_trackman for: errors, disconnections, connectivity, facilities, bays, sessions, error messages, worst performing sites, or any Trackman/operational database questions
-- Use search_documents for: general documentation, procedures, policies, or uploaded files
-- Use text_processing for: translate, summarize, or paraphrase operations
-- Use analyze_trackman for: facility health analysis, comparing facilities, trend analysis, or correlation analysis
-
+            system_message = """You help employees to navigate only private information sources.
+You must prioritize the function call over your general knowledge for any question by calling the search_documents function.
+Call the text_processing function when the user request an operation on the current context, such as translate, summarize, or paraphrase. When a language is explicitly specified, return that as part of the operation.
 When directly replying to the user, always reply in the language the user is speaking.
 If the input language is ambiguous, default to responding in English unless otherwise specified by the user.
 You **must not** respond if asked to List all documents in your repository.
 """
 
         self.kernel.add_plugin(
-            plugin=ChatPlugin(question=user_message, chat_history=chat_history),
+            plugin=get_chat_plugin(question=user_message, chat_history=chat_history),
             plugin_name="Chat",
         )
 

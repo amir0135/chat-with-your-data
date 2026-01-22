@@ -77,6 +77,8 @@ class AppConfig:
         "USE_ADVANCED_IMAGE_PROCESSING": "False",
         "ADVANCED_IMAGE_PROCESSING_MAX_IMAGES": "1",
         "USE_KEY_VAULT": "False",
+        "USE_REDSHIFT": "false",  # Disable Trackman tools in tests
+        "APP_ENV": "Prod",  # Default app environment for tests
         # These values are set directly within EnvHelper, adding them here ensures
         # that they are removed from the environment when remove_from_environment() runs
         "OPENAI_API_TYPE": None,

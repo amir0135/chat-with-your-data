@@ -4,12 +4,16 @@ import sys
 import pytest
 from tests.functional.app_config import AppConfig
 
+# Import from BOTH paths to ensure we clear both singletons
+# The production code may be imported from either path depending on how Python resolves modules
+from backend.batch.utilities.helpers.config.config_helper import ConfigHelper as ConfigHelper1
+from backend.batch.utilities.helpers.env_helper import EnvHelper as EnvHelper1
+
 sys.path.append(
     os.path.join(os.path.dirname(sys.path[0]), "..", "..", "..", "backend", "batch")
 )
-# The below imports are needed due to the sys.path.append above as the backend function is not aware of the folders outside of the function
-from utilities.helpers.config.config_helper import ConfigHelper  # noqa: E402
-from utilities.helpers.env_helper import EnvHelper  # noqa: E402
+from utilities.helpers.config.config_helper import ConfigHelper as ConfigHelper2  # noqa: E402
+from utilities.helpers.env_helper import EnvHelper as EnvHelper2  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +42,14 @@ def app_config(make_httpserver, ca):
 @pytest.fixture(scope="package", autouse=True)
 def manage_app(app_config: AppConfig):
     app_config.apply_to_environment()
-    EnvHelper.clear_instance()
-    ConfigHelper.clear_config()
+    # Clear both singletons from both module paths to handle Python's dual-import issue
+    EnvHelper1.clear_instance()
+    EnvHelper2.clear_instance()
+    ConfigHelper1.clear_config()
+    ConfigHelper2.clear_config()
     yield
     app_config.remove_from_environment()
-    EnvHelper.clear_instance()
-    ConfigHelper.clear_config()
+    EnvHelper1.clear_instance()
+    EnvHelper2.clear_instance()
+    ConfigHelper1.clear_config()
+    ConfigHelper2.clear_config()
