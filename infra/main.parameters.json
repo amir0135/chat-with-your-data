@@ -27,6 +27,24 @@
     "databaseType": {
       "value": "${DATABASE_TYPE=PostgreSQL}"
     },
+    "useRedshift": {
+      "value": "${USE_REDSHIFT=false}"
+    },
+    "redshiftHost": {
+      "value": "${REDSHIFT_HOST}"
+    },
+    "redshiftPort": {
+      "value": "${REDSHIFT_PORT=5439}"
+    },
+    "redshiftDatabase": {
+      "value": "${REDSHIFT_DB}"
+    },
+    "redshiftUser": {
+      "value": "${REDSHIFT_USER}"
+    },
+    "redshiftPassword": {
+      "value": "${REDSHIFT_PASSWORD}"
+    },
     "azureSearchUseIntegratedVectorization": {
       "value": "${AZURE_SEARCH_USE_INTEGRATED_VECTORIZATION=false}"
     },

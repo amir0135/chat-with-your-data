@@ -150,6 +150,30 @@ param useAdvancedImageProcessing bool = false
 @description('Optional. The maximum number of images to pass to the vision model in a single request.')
 param advancedImageProcessingMaxImages int = 1
 
+// =============================================
+// Trackman/Redshift Integration Parameters
+// =============================================
+@description('Optional. Whether to enable Trackman database integration for operational data queries.')
+param useRedshift bool = false
+
+@description('Optional. Redshift/PostgreSQL host for Trackman data.')
+@secure()
+param redshiftHost string = ''
+
+@description('Optional. Redshift/PostgreSQL port for Trackman data.')
+param redshiftPort string = '5439'
+
+@description('Optional. Redshift/PostgreSQL database name for Trackman data.')
+param redshiftDatabase string = ''
+
+@description('Optional. Redshift/PostgreSQL user for Trackman data.')
+@secure()
+param redshiftUser string = ''
+
+@description('Optional. Redshift/PostgreSQL password for Trackman data.')
+@secure()
+param redshiftPassword string = ''
+
 @description('Optional. Azure OpenAI Vision Model Deployment Name.')
 param azureOpenAIVisionModel string = 'gpt-4.1'
 
@@ -1285,6 +1309,13 @@ module web 'modules/app/web.bicep' = {
         MANAGED_IDENTITY_RESOURCE_ID: managedIdentityModule.outputs.resourceId
         AZURE_CLIENT_ID: managedIdentityModule.outputs.clientId // Required so LangChain AzureSearch vector store authenticates with this user-assigned managed identity
         APP_ENV: appEnvironment
+        // Trackman/Redshift Integration
+        USE_REDSHIFT: useRedshift ? 'true' : 'false'
+        REDSHIFT_HOST: useRedshift ? redshiftHost : ''
+        REDSHIFT_PORT: useRedshift ? redshiftPort : ''
+        REDSHIFT_DB: useRedshift ? redshiftDatabase : ''
+        REDSHIFT_USER: useRedshift ? redshiftUser : ''
+        REDSHIFT_PASSWORD: useRedshift ? redshiftPassword : ''
       },
       databaseType == 'CosmosDB'
         ? {
