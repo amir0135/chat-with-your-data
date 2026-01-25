@@ -55,6 +55,13 @@ class OpenAIFunctionsOrchestrator(OrchestratorBase):
         self, user_message: str, chat_history: List[dict], **kwargs: dict
     ) -> list[dict]:
         logger.info("Method orchestrate of open_ai_functions started")
+        force_database = kwargs.get("force_database", False)
+
+        # If force_database is True, bypass function selection and directly query database
+        if force_database:
+            logger.info("Force database mode: bypassing function selection")
+            return await self._handle_force_database_query(user_message, chat_history)
+
         # Call Content Safety tool
         if self.config.prompts.enable_content_safety:
             logger.info("Content Safety enabled. Checking input message...")
@@ -162,3 +169,50 @@ class OpenAIFunctionsOrchestrator(OrchestratorBase):
         )
         logger.info("Method orchestrate of open_ai_functions ended")
         return messages
+
+    async def _handle_force_database_query(
+        self, user_message: str, chat_history: List[dict]
+    ) -> list[dict]:
+        """
+        Handle /database command by directly calling the Trackman query tool.
+        Bypasses function selection for guaranteed database queries.
+        """
+        import os
+        from ..tools.trackman_nl_query_tool import TrackmanNLQueryTool
+
+        try:
+            if os.getenv("USE_REDSHIFT", "false").lower() != "true":
+                answer = Answer(
+                    question=user_message,
+                    answer="Database queries are not enabled. Set USE_REDSHIFT=true to enable Trackman database integration.",
+                    source_documents=[],
+                )
+            else:
+                tool = TrackmanNLQueryTool()
+                answer = tool.query_with_natural_language(
+                    question=user_message, max_rows=100
+                )
+                logger.info("Force database query executed successfully")
+
+            self.log_tokens(
+                prompt_tokens=answer.prompt_tokens or 0,
+                completion_tokens=answer.completion_tokens or 0,
+            )
+
+            return self.output_parser.parse(
+                question=answer.question,
+                answer=answer.answer,
+                source_documents=answer.source_documents,
+            )
+        except Exception as e:
+            logger.error(f"Error in force database query: {str(e)}", exc_info=True)
+            answer = Answer(
+                question=user_message,
+                answer=f"Error querying database: {str(e)}",
+                source_documents=[],
+            )
+            return self.output_parser.parse(
+                question=answer.question,
+                answer=answer.answer,
+                source_documents=[],
+            )

@@ -540,6 +540,7 @@ def create_app():
             logger.info("Method conversation_custom started")
             user_message = request.json["messages"][-1]["content"]
             conversation_id = request.json["conversation_id"]
+            force_database = request.json.get("force_database", False)
             user_assistant_messages = list(
                 filter(
                     lambda x: x["role"] in ("user", "assistant"),
@@ -552,6 +553,7 @@ def create_app():
                 chat_history=user_assistant_messages,
                 conversation_id=conversation_id,
                 orchestrator=get_orchestrator_config(),
+                force_database=force_database,
             )
 
             response_obj = {

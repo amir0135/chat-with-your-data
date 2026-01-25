@@ -17,6 +17,7 @@ export async function callConversationApi(
     body: JSON.stringify({
       messages: options.messages,
       conversation_id: options.id,
+      force_database: options.force_database,
     }),
     signal: abortSignal,
   });

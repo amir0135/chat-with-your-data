@@ -141,9 +141,16 @@ const Chat = () => {
     const abortController = new AbortController();
     abortFuncs.current.unshift(abortController);
 
+    // Check for /database command prefix
+    const databasePrefix = "/database ";
+    const forceDatabase = question.toLowerCase().startsWith(databasePrefix);
+    const actualQuestion = forceDatabase
+      ? question.slice(databasePrefix.length).trim()
+      : question;
+
     const userMessage: ChatMessage = {
       role: "user",
-      content: recognizedText || question,
+      content: recognizedText || actualQuestion,
       id: uuidv4(),
       date: new Date().toISOString(),
     };
@@ -153,6 +160,7 @@ const Chat = () => {
       messages: [...answers, userMessage].filter(
         (messageObj) => messageObj.role !== ERROR
       ),
+      force_database: forceDatabase,
     };
     let result = {} as ChatResponse;
     try {
@@ -613,7 +621,7 @@ const Chat = () => {
               />
               <QuestionInput
                 clearOnSend
-                placeholder="Type a new question..."
+                placeholder="Type a question... (use /database for direct DB queries)"
                 disabled={isGenerating}
                 onSend={(question) => makeApiRequest(question)}
                 recognizedText={recognizedText}

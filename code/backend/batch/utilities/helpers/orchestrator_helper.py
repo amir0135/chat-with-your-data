@@ -17,13 +17,14 @@ class Orchestrator:
         chat_history: List[dict],
         conversation_id: str,
         orchestrator: OrchestrationSettings,
+        force_database: bool = False,
         **kwargs: dict,
     ) -> dict:
-        orchestrator = get_orchestrator(orchestrator.strategy.value)
-        if orchestrator is None:
+        orchestrator_instance = get_orchestrator(orchestrator.strategy.value)
+        if orchestrator_instance is None:
             raise Exception(
                 f"Unknown orchestration strategy: {orchestrator.strategy.value}"
             )
-        return await orchestrator.handle_message(
-            user_message, chat_history, conversation_id
+        return await orchestrator_instance.handle_message(
+            user_message, chat_history, conversation_id, force_database=force_database
         )

@@ -67,6 +67,7 @@ export type ChatResponse = {
 export type ConversationRequest = {
     id?: string;
     messages: ChatMessage[];
+    force_database?: boolean;
 };
 
 export type Conversation = {

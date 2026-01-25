@@ -318,6 +318,7 @@ class TestConversationCustom:
             chat_history=self.body["messages"][:-1],
             conversation_id=self.body["conversation_id"],
             orchestrator=self.orchestrator_config,
+            force_database=False,
         )
 
     @patch("create_app.get_orchestrator_config")
@@ -474,6 +475,7 @@ class TestConversationCustom:
             chat_history=body["messages"][:-1],
             conversation_id=body["conversation_id"],
             orchestrator=self.orchestrator_config,
+            force_database=False,
         )
 
     @patch(

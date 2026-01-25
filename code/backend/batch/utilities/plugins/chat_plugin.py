@@ -80,7 +80,17 @@ class TrackmanChatPlugin(ChatPlugin):
         self._trackman_analysis_tool = TrackmanAnalysisTool
 
     @kernel_function(
-        description="Query Trackman/operational database for data counts and metrics. Use for: error counts, error types, session counts, disconnection counts, connectivity metrics, facility performance, bay performance, unit statistics, or any question asking 'how many', 'which has most/least', 'top N', 'count of', 'list of errors/sessions/facilities'."
+        description=(
+            "Query the Trackman operational database. ALWAYS use this tool for questions about: "
+            "error_logs (errors, error messages, event_level, radar_model, radar_firmware, facility errors), "
+            "connectivity_logs (disconnections, connections, speed_mbps, connection_type), "
+            "facility_metadata (facilities, locations, usage), "
+            "data_quality_logs (quality scores, latency, missing records). "
+            "Use for any question with: 'how many', 'count', 'total', 'which has most/least', "
+            "'top N', 'group by', 'average', 'sum', 'min', 'max', 'list', 'show', 'query', "
+            "'from database', 'from table', 'from error_logs', 'from connectivity_logs'. "
+            "This tool generates SQL and returns actual database results."
+        )
     )
     def query_trackman(
         self,
