@@ -50,6 +50,7 @@ azure-ai-evaluation = "^1.0.0"
 azure-core-tracing-opentelemetry = "^1.0.0b12"
 opentelemetry-api = "^1.26.0"
 opentelemetry-sdk = "^1.26.0"
+pyyaml = "^6.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.2"

@@ -1,0 +1,163 @@
+# Trackman Schema Configuration
+# ================================
+# Add new tables and columns here. The system will automatically:
+# 1. Validate queries against this allowlist
+# 2. Generate appropriate prompts for the LLM
+# 3. Introspect actual column types from the database
+#
+# To add a new table:
+# 1. Add the table name under 'tables'
+# 2. List allowed columns (or use '*' to allow all columns)
+# 3. Add optional metadata for better LLM understanding
+#
+# Schema will be auto-refreshed every hour from the database.
+
+tables:
+  # Error and alert data
+  error_logs:
+    columns:
+      - id
+      - error_timestamp
+      - facility_id
+      - facility_name
+      - bay_id
+      - radar_serial
+      - radar_firmware
+      - radar_model
+      - tps_messages_amount
+      - event_level
+      - message_id
+      - message
+      - facility
+      - bay
+    description: "System errors and alerts from Trackman devices"
+    date_column: error_timestamp
+    common_queries:
+      - "Most common error messages"
+      - "Errors by facility"
+      - "Critical alerts this week"
+
+  # Network connectivity data
+  connectivity_logs:
+    columns:
+      - id
+      - facility_id
+      - facility_name
+      - bay_id
+      - bay_name
+      - log_date
+      - disconnection_cnt
+      - model_status
+      - client_version
+      - radar_serial
+      - radar_firmware
+      - connection_type
+      - speed_mbps
+      - mode
+      - device_root
+      - cpu_freeze
+    description: "Network connectivity and disconnection events"
+    date_column: log_date
+    common_queries:
+      - "Facilities with most disconnections"
+      - "Connection speed issues"
+
+  # Usage sessions
+  sessions:
+    columns:
+      - id
+      - sg_facility_id
+      - sg_bay_id
+      - activity_date
+      - facility
+      - bay
+      - radar_serial
+      - earliest_occurrence
+      - latest_occurrence
+      - session_count
+      - strokes_total
+      - ballspeed_cnt_total
+      - clubspeed_cnt_total
+      - clubspeed_pickup_total
+      - strokes_shotanalysis
+      - clubspeed_cnt_shotanalysis
+      - clubspeed_pickup_shotanalysis
+      - strokes_vgrange
+      - clubspeed_cnt_vgrange
+      - clubspeed_pickup_vgrange
+      - strokes_courseplay
+      - clubspeed_cnt_courseplay
+      - clubspeed_pickup_courseplay
+      - tps_version
+      - iorelease
+    description: "Usage sessions - strokes, activity, bay info"
+    date_column: activity_date
+    common_queries:
+      - "Total strokes by facility"
+      - "Session activity patterns"
+
+  # Facility KPIs
+  indoor_kpis:
+    columns:
+      - id
+      - facility_name
+      - facility_id
+      - bay_name
+      - bay_id
+      - is_bay_still_configured
+      - does_bay_have_activity
+      - timezone
+      - visible_on_locator
+      - earliest_last_bay_activity
+      - latest_last_bay_activity
+      - latest_configured_unit_activity
+      - occupancy
+      - configured_bays
+      - active_units
+      - total_strokes
+      - strokes_per_bay
+      - logged_in_players_per_bay
+      - logged_in_players_w_app
+      - logged_in_players_active_days_ratio
+    description: "Facility performance metrics and KPIs"
+    date_column: null
+    common_queries:
+      - "Facility occupancy rates"
+      - "Active units comparison"
+
+# Table aliases (for user convenience)
+aliases:
+  errors: error_logs
+  connectivity: connectivity_logs
+  connections: connectivity_logs
+  kpis: indoor_kpis
+
+# Keywords that map to tables (for smart query routing)
+keywords:
+  error_logs:
+    - error
+    - errors
+    - alert
+    - critical
+    - warning
+    - failure
+    - problem
+  connectivity_logs:
+    - disconnect
+    - connection
+    - network
+    - offline
+    - speed
+    - wifi
+  sessions:
+    - session
+    - stroke
+    - usage
+    - activity
+    - clubspeed
+    - ballspeed
+  indoor_kpis:
+    - kpi
+    - occupancy
+    - metric
+    - performance
