@@ -6,6 +6,7 @@ import functools
 import json
 import logging
 import mimetypes
+import os
 from os import path
 import sys
 import re
@@ -642,6 +643,62 @@ def create_app():
     async def check_auth_enforced():
         """Check if the authentiction is enforced."""
         return jsonify({"is_auth_enforced": env_helper.ENFORCE_AUTH})
+
+    @app.route("/api/schema/refresh", methods=["POST"])
+    def refresh_database_schema():
+        """
+        Refresh the database schema configuration by introspecting the database.
+        Uses AI to generate descriptions and keywords automatically.
+        """
+        if os.getenv("USE_REDSHIFT", "false").lower() != "true":
+            return jsonify({"error": "Database integration not enabled"}), 400
+
+        try:
+            from backend.batch.utilities.helpers.trackman.schema_discovery import (
+                discover_and_generate_schema,
+            )
+
+            use_ai = request.json.get("use_ai", True) if request.json else True
+            schema = discover_and_generate_schema(use_ai=use_ai)
+
+            return jsonify({
+                "success": True,
+                "tables_discovered": len(schema),
+                "tables": list(schema.keys()),
+            })
+        except Exception as e:
+            logger.error(f"Schema refresh failed: {e}", exc_info=True)
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/schema/info", methods=["GET"])
+    def get_schema_info():
+        """Get current schema configuration."""
+        if os.getenv("USE_REDSHIFT", "false").lower() != "true":
+            return jsonify({"error": "Database integration not enabled"}), 400
+
+        try:
+            from backend.batch.utilities.helpers.trackman.schema_loader import (
+                get_allowed_tables,
+                get_table_description,
+                get_date_column,
+            )
+
+            tables = get_allowed_tables()
+            schema_info = {}
+            for table_name, columns in tables.items():
+                schema_info[table_name] = {
+                    "columns": columns,
+                    "description": get_table_description(table_name),
+                    "date_column": get_date_column(table_name),
+                }
+
+            return jsonify({
+                "tables": schema_info,
+                "table_count": len(tables),
+            })
+        except Exception as e:
+            logger.error(f"Failed to get schema info: {e}", exc_info=True)
+            return jsonify({"error": str(e)}), 500
 
     app.register_blueprint(bp_chat_history_response, url_prefix="/api")
     return app
