@@ -12,7 +12,7 @@ from semantic_kernel.contents.utils.finish_reason import FinishReason
 from ..common.answer import Answer
 from ..helpers.llm_helper import LLMHelper
 from ..helpers.env_helper import EnvHelper
-from ..plugins.chat_plugin import get_chat_plugin, TrackmanChatPlugin
+from ..plugins.chat_plugin import get_chat_plugin
 from ..plugins.post_answering_plugin import PostAnsweringPlugin
 from .orchestrator_base import OrchestratorBase
 
